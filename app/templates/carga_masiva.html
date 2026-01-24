@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CÓRTEX | Carga Masiva</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body { background-color: #f8fafc; font-family: 'Segoe UI', sans-serif; }
+        .container { max-width: 1200px; margin-top: 50px; }
+        .card { border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border-radius: 12px; }
+        .header-step { font-weight: 800; color: #1e293b; letter-spacing: 1px; }
+        .table-preview { font-size: 0.85rem; }
+        .bg-gradient-primary { background: linear-gradient(135deg, #0f172a 0%, #334155 100%); color: white; }
+    </style>
+</head>
+<body>
+
+<div class="container mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark mb-0"><i class="bi bi-box-seam-fill text-primary"></i> MÓDULO DE INGESTA MASIVA</h2>
+            <p class="text-muted small">Importación de incidentes desde Excel (.xlsx)</p>
+        </div>
+        <a href="/" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Volver al Tablero</a>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-white py-3">
+            <span class="header-step text-primary">PASO 1: CARGAR ARCHIVO</span>
+        </div>
+        <div class="card-body">
+            <form action="/panel/preview" method="post" enctype="multipart/form-data" class="row align-items-end g-3">
+                <div class="col-md-9">
+                    <label class="form-label small fw-bold text-muted">Seleccione el archivo Excel (.xlsx)</label>
+                    <input class="form-control" type="file" name="file" accept=".xlsx" required>
+                    <div class="form-text">El archivo debe contener las columnas: folio_911, tipo_incidente, fecha_hora, descripcion_hechos, calle, colonia, latitud, longitud...</div>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100 fw-bold"><i class="bi bi-eye"></i> PREVISUALIZAR</button>
+                </div>
+            </form>
+            
+            {% if error %}
+            <div class="alert alert-danger mt-3 mb-0">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error }}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if datos %}
+    <div class="card border-primary border-2">
+        <div class="card-header bg-gradient-primary py-3 d-flex justify-content-between align-items-center">
+            <span class="header-step text-white">PASO 2: VERIFICAR Y CONFIRMAR</span>
+            <span class="badge bg-white text-dark">{{ datos|length }} Registros Encontrados</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                <table class="table table-striped table-hover table-preview mb-0 align-middle">
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            <th>Folio 911</th>
+                            <th>Tipo</th>
+                            <th>Fecha</th>
+                            <th>Ubicación</th>
+                            <th>Narrativa</th>
+                            <th>Vehículos</th>
+                            <th>Personas</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in datos %}
+                        <tr>
+                            <td class="fw-bold">{{ item.folio_911 }}</td>
+                            <td><span class="badge bg-secondary">{{ item.tipo_incidente }}</span></td>
+                            <td>{{ item.fecha_hora }}</td>
+                            <td>{{ item.colonia }}, {{ item.calle }}<br><small class="text-muted">{{ item.latitud }}, {{ item.longitud }}</small></td>
+                            <td><div class="text-truncate" style="max-width: 200px;">{{ item.descripcion_hechos }}</div></td>
+                            <td>
+                                {% for v in item.vehiculos %}
+                                <div class="small">Wait: {{ v.marca }} {{ v.modelo }} ({{ v.placas }})</div>
+                                {% endfor %}
+                            </td>
+                            <td>
+                                {% for p in item.personas %}
+                                <div class="small">{{ p.nombre_alias }}</div>
+                                {% endfor %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white p-3 text-end">
+            <button onclick="cancelar()" class="btn btn-outline-danger me-2">CANCELAR</button>
+            <button onclick="confirmarCarga()" id="btnConfirmar" class="btn btn-success fw-bold px-4">
+                <i class="bi bi-cloud-upload-fill me-2"></i> CONFIRMAR E INSERTAR EN BASE DE DATOS
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+{% if datos %}
+<script>
+    // Convertimos los datos de Jinja a JSON válido de Javascript
+    const datosParaEnviar = {{ datos | tojson | safe }};
+</script>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function cancelar() {
+        window.location.href = "/panel/carga";
+    }
+
+    async function confirmarCarga() {
+        const btn = document.getElementById('btnConfirmar');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> PROCESANDO...';
+
+        try {
+            const response = await fetch('/panel/confirmar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(datosParaEnviar)
+            });
+
+            const result = await response.json();
+
+            if (result.status === 'ok') {
+                Swal.fire({
+                    title: '¡Éxito!',
+                    text: result.mensaje,
+                    icon: 'success',
+                    confirmButtonText: 'Volver al Tablero'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = "/"; // Volver al index
+                    }
+                });
+            } else {
+                Swal.fire({
+                    title: 'Error',
+                    text: result.mensaje,
+                    icon: 'error'
+                });
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-cloud-upload-fill me-2"></i> CONFIRMAR E INSERTAR';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            Swal.fire({
+                title: 'Error de Red',
+                text: 'No se pudo conectar con el servidor.',
+                icon: 'error'
+            });
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-cloud-upload-fill me-2"></i> REINTENTAR';
+        }
+    }
+</script>
+
+</body>
+</html>

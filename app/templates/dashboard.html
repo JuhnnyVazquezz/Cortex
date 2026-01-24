@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>CÓRTEX C5 - COMANDO CENTRAL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { colors: { cortex: { dark: '#0f172a', panel: '#1e293b', accent: '#38bdf8', alert: '#ef4444' } } } }
+        }
+    </script>
+    <style>
+        body { background-color: #0f172a; color: white; font-family: 'Segoe UI', sans-serif; }
+        .tab-active { border-left: 4px solid #38bdf8; background-color: #1e293b; color: white; }
+        .tab-inactive { border-left: 4px solid transparent; color: #94a3b8; }
+        .tab-inactive:hover { background-color: #1e293b; color: white; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <header class="bg-gray-900 border-b border-gray-700 h-16 flex items-center justify-between px-6 shadow-lg z-50">
+        <div class="flex items-center gap-4">
+            <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_#22c55e]"></div>
+            <h1 class="text-2xl font-black tracking-[0.2em] text-white">CÓRTEX <span class="text-cortex-accent">C5</span></h1>
+        </div>
+        <div class="flex gap-6 text-xs font-mono text-gray-400">
+            <div id="status-connection" class="flex items-center gap-2"><span class="w-2 h-2 bg-yellow-500 rounded-full"></span> CONECTANDO...</div>
+            <div id="reloj">00:00:00</div>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        
+        <aside class="w-64 bg-gray-900 border-r border-gray-700 flex flex-col justify-between p-4">
+            <div class="space-y-4">
+                <div class="text-[10px] font-bold text-gray-500 tracking-widest mb-2">VISTAS TÁCTICAS</div>
+                
+                <button onclick="cambiarVista('bitacora')" id="btn-bitacora" class="w-full text-left p-3 rounded transition tab-active font-bold flex items-center gap-3">
+                    📂 <span>BITÁCORA INCIDENTES</span>
+                </button>
+                
+                <button onclick="cambiarVista('kardex')" id="btn-kardex" class="w-full text-left p-3 rounded transition tab-inactive font-bold flex items-center gap-3">
+                    🚔 <span>KÁRDEX VEHICULAR</span>
+                </button>
+            </div>
+
+            <div class="p-4 bg-gray-800 rounded border border-gray-700">
+                <h3 class="text-[10px] font-bold text-gray-500 mb-2 uppercase">ADMINISTRACIÓN</h3>
+                <button onclick="sembrarDatos()" class="w-full bg-blue-900/40 hover:bg-blue-800/60 text-xs py-3 rounded text-blue-200 border border-blue-500/30 transition flex justify-center items-center gap-2 font-bold">
+                    ⚡ GÉNESIS (INYECTAR DATOS)
+                </button>
+                <p class="text-[9px] text-gray-500 mt-2 text-center">Genera 50 registros aleatorios si la tabla está vacía.</p>
+            </div>
+        </aside>
+
+        <main class="flex-1 p-6 overflow-y-auto bg-[#0f172a] relative">
+            
+            <div class="flex justify-between items-end mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-white mb-1" id="titulo-vista">BITÁCORA DE OPERACIONES</h2>
+                    <p class="text-gray-400 text-sm">Visualización en tiempo real de la base de datos.</p>
+                </div>
+                <div class="flex gap-4">
+                    <div class="bg-gray-800 px-4 py-2 rounded border border-gray-700">
+                        <span class="text-xs text-gray-500 font-bold block">TOTAL REGISTROS</span>
+                        <span class="text-xl font-mono font-bold text-cortex-accent" id="kpi-total">0</span>
+                    </div>
+                    <input type="text" id="buscador" placeholder="🔍 Filtrar datos..." class="bg-gray-800 border border-gray-600 rounded px-4 py-2 text-sm focus:outline-none focus:border-cortex-accent text-white w-64 transition" onkeyup="filtrarTabla()">
+                </div>
+            </div>
+
+            <div class="bg-gray-800 rounded border border-gray-700 overflow-hidden shadow-2xl">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-900 text-gray-400 text-[10px] uppercase tracking-wider" id="tabla-head">
+                            </thead>
+                        <tbody id="tabla-body" class="text-xs font-mono divide-y divide-gray-700 text-gray-300">
+                            <tr><td class="p-8 text-center text-gray-500 animate-pulse">Estableciendo enlace satelital...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        let token = "";
+        let vistaActual = 'bitacora'; // bitacora | kardex
+
+        // Reloj
+        setInterval(() => document.getElementById('reloj').innerText = new Date().toLocaleTimeString(), 1000);
+
+        // 1. INICIO: AUTENTICACIÓN
+        async function conectarSistema() {
+            try {
+                const formData = new URLSearchParams();
+                formData.append('username', 'admin');
+                formData.append('password', 'cortex123');
+                
+                const res = await fetch('/token', { method: 'POST', body: formData });
+                if (!res.ok) throw new Error("Error de Login Admin");
+                
+                const data = await res.json();
+                token = data.access_token;
+                document.getElementById('status-connection').innerHTML = '<span class="text-green-500 font-bold">● CONECTADO</span>';
+                
+                // Cargar vista por defecto
+                cambiarVista('bitacora');
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById('status-connection').innerHTML = '<span class="text-red-500 font-bold">● ERROR DE ACCESO</span>';
+                document.getElementById('tabla-body').innerHTML = `<tr><td class="p-10 text-center text-red-400">No se pudo autenticar. Reinicia el servidor 'main.py'.</td></tr>`;
+            }
+        }
+
+        // 2. CAMBIADOR DE VISTAS (LA CLAVE)
+        function cambiarVista(vista) {
+            vistaActual = vista;
+            
+            // Estilos de botones
+            document.getElementById('btn-bitacora').className = `w-full text-left p-3 rounded transition font-bold flex items-center gap-3 ${vista === 'bitacora' ? 'tab-active' : 'tab-inactive'}`;
+            document.getElementById('btn-kardex').className = `w-full text-left p-3 rounded transition font-bold flex items-center gap-3 ${vista === 'kardex' ? 'tab-active' : 'tab-inactive'}`;
+
+            if (vista === 'bitacora') {
+                document.getElementById('titulo-vista').innerText = "BITÁCORA DE INCIDENTES (HISTORIAL)";
+                cargarBitacora();
+            } else {
+                document.getElementById('titulo-vista').innerText = "KÁRDEX VEHICULAR (VIGILANCIA)";
+                cargarKardex();
+            }
+        }
+
+        // 3. CARGAR BITÁCORA (LO QUE NO VEÍAS ANTES)
+        async function cargarBitacora() {
+            configurarTabla(['FOLIO', 'TIPO', 'HECHOS', 'UBICACIÓN', 'FECHA']);
+            
+            const res = await fetch('/api/v1/buscar/', { headers: { 'Authorization': `Bearer ${token}` } });
+            const datos = await res.json();
+            
+            const tbody = document.getElementById('tabla-body');
+            tbody.innerHTML = "";
+            document.getElementById('kpi-total').innerText = datos.length;
+
+            if (datos.length === 0) { mostrarVacio(); return; }
+
+            datos.forEach(inc => {
+                let colorTipo = "text-white";
+                if (inc.tipo_incidente === 'ROBO VEHICULO') colorTipo = "text-red-400 font-bold";
+                
+                const fecha = new Date(inc.creado_en).toLocaleString();
+                const row = `
+                    <tr class="hover:bg-gray-700 transition">
+                        <td class="p-3 font-bold border-l-2 border-transparent hover:border-cortex-accent">${inc.folio_interno}</td>
+                        <td class="p-3 ${colorTipo}">${inc.tipo_incidente}</td>
+                        <td class="p-3 text-gray-400 truncate max-w-xs" title="${inc.descripcion_hechos}">${inc.descripcion_hechos}</td>
+                        <td class="p-3 text-gray-500">${inc.colonia || '-'}, ${inc.calle || '-'}</td>
+                        <td class="p-3 text-gray-500">${fecha}</td>
+                    </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+
+        // 4. CARGAR KÁRDEX (VEHÍCULOS)
+        async function cargarKardex() {
+            configurarTabla(['FOTO', 'PLACA', 'VEHÍCULO', 'ESTATUS', 'PROPIETARIO']);
+            
+            const res = await fetch('/api/v1/interes/', { headers: { 'Authorization': `Bearer ${token}` } });
+            const datos = await res.json();
+            
+            const tbody = document.getElementById('tabla-body');
+            tbody.innerHTML = "";
+            document.getElementById('kpi-total').innerText = datos.length;
+
+            if (datos.length === 0) { mostrarVacio(); return; }
+
+            datos.forEach(v => {
+                let badge = v.estatus === 'ROBADO' ? 'bg-red-600 animate-pulse' : (v.estatus === 'SOSPECHOSO' ? 'bg-yellow-600' : 'bg-gray-600');
+                
+                let imgHtml = '<div class="w-8 h-8 bg-gray-700 rounded flex items-center justify-center text-[8px]">N/A</div>';
+                if (v.fotos && v.fotos.length > 0) {
+                    imgHtml = `<img src="/static/${v.fotos[0].ruta}" class="w-8 h-8 object-cover rounded border border-gray-600">`;
+                }
+
+                const row = `
+                    <tr class="hover:bg-gray-700 transition">
+                        <td class="p-3">${imgHtml}</td>
+                        <td class="p-3 font-black text-white tracking-widest text-sm">${v.placa}</td>
+                        <td class="p-3">${v.marca} ${v.modelo} <span class="text-gray-500 text-[10px]">${v.color}</span></td>
+                        <td class="p-3"><span class="${badge} text-white px-2 py-0.5 rounded text-[10px] font-bold">${v.estatus}</span></td>
+                        <td class="p-3 text-gray-400">${v.propietario}</td>
+                    </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+
+        // UTILIDADES
+        function configurarTabla(headers) {
+            const tr = document.createElement('tr');
+            headers.forEach(h => {
+                const th = document.createElement('th');
+                th.className = "p-3 font-bold border-b border-gray-700";
+                th.innerText = h;
+                tr.appendChild(th);
+            });
+            const thead = document.getElementById('tabla-head');
+            thead.innerHTML = "";
+            thead.appendChild(tr);
+        }
+
+        function mostrarVacio() {
+            document.getElementById('tabla-body').innerHTML = `
+                <tr><td colspan="5" class="p-10 text-center text-gray-500">
+                    <div class="text-4xl mb-2">📭</div>
+                    Base de datos vacía.<br>
+                    <span class="text-cortex-accent">Presiona el botón 'GÉNESIS' en el menú lateral.</span>
+                </td></tr>`;
+        }
+
+        function filtrarTabla() {
+            const val = document.getElementById('buscador').value.toUpperCase();
+            const filas = document.getElementById('tabla-body').getElementsByTagName('tr');
+            for(let fila of filas) {
+                fila.style.display = fila.innerText.toUpperCase().includes(val) ? "" : "none";
+            }
+        }
+
+        async function sembrarDatos() {
+            if (!confirm("⚠️ ¿Ejecutar Operación GÉNESIS? (Creará 50 registros)")) return;
+            const res = await fetch('/api/v1/admin/sembrar_datos/?cantidad=50', { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+            if(res.ok) { alert("Datos inyectados."); location.reload(); }
+        }
+
+        window.onload = conectarSistema;
+    </script>
+</body>
+</html>

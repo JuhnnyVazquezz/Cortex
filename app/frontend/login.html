@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACCESO CÓRTEX V9</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #0f172a; height: 100vh; display: flex; align-items: center; justify-content: center; font-family: 'Courier New', monospace; }
+        .login-card { background: #1e293b; border: 1px solid #334155; width: 100%; max-width: 400px; padding: 40px; border-radius: 0; box-shadow: 0 0 50px rgba(0, 240, 255, 0.1); position: relative; overflow: hidden; }
+        .login-card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: #00f0ff; box-shadow: 0 0 10px #00f0ff; }
+        .form-control { background: #0f172a; border: 1px solid #334155; color: #00f0ff; border-radius: 0; padding: 15px; letter-spacing: 2px; }
+        .form-control:focus { background: #0f172a; border-color: #00f0ff; color: #fff; box-shadow: none; }
+        .btn-login { background: #00f0ff; color: #000; font-weight: 900; letter-spacing: 3px; border-radius: 0; padding: 15px; width: 100%; margin-top: 20px; transition: 0.3s; border: none; }
+        .btn-login:hover { background: #fff; box-shadow: 0 0 20px #00f0ff; }
+        h2 { color: #fff; font-weight: 900; letter-spacing: 5px; text-align: center; margin-bottom: 30px; text-shadow: 0 0 10px rgba(255,255,255,0.5); }
+        .status-text { color: #64748b; font-size: 0.8rem; text-align: center; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <h2>CÓRTEX</h2>
+        <form id="loginForm">
+            <div class="mb-3">
+                <input type="text" class="form-control" id="username" placeholder="IDENTIFICACIÓN" required autocomplete="off">
+            </div>
+            <div class="mb-3">
+                <input type="password" class="form-control" id="password" placeholder="CLAVE DE ACCESO" required>
+            </div>
+            <button type="submit" class="btn btn-login" id="btnLogin">INICIAR SESIÓN</button>
+        </form>
+        <div class="status-text" id="statusMsg">SISTEMA DE INTELIGENCIA</div>
+    </div>
+
+    <script>
+        // --- DETECCIÓN AUTOMÁTICA DEL SERVIDOR ---
+        const BASE_URL = window.location.protocol === 'file:' 
+            ? 'http://127.0.0.1:8000'  // Si es archivo local, usa localhost
+            : '';                      // Si es web, usa ruta relativa
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const btn = document.getElementById('btnLogin');
+            const msg = document.getElementById('statusMsg');
+
+            btn.disabled = true;
+            btn.innerHTML = "VERIFICANDO...";
+            msg.innerText = "CONECTANDO A NODO CENTRAL...";
+            msg.style.color = "#00f0ff";
+
+            // Crear datos de formulario (x-www-form-urlencoded)
+            const formData = new URLSearchParams();
+            formData.append('username', user);
+            formData.append('password', pass);
+
+            try {
+                // Intentar Login
+                const response = await fetch(`${BASE_URL}/token`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Guardar credenciales en sesión
+                    sessionStorage.setItem('cortex_token', data.access_token);
+                    sessionStorage.setItem('cortex_role', data.rol);
+                    sessionStorage.setItem('cortex_user', user);
+
+                    msg.innerText = "ACCESO AUTORIZADO";
+                    msg.style.color = "#22c55e"; // Verde
+                    
+                    // Redirigir al Dashboard
+                    setTimeout(() => {
+                        window.location.href = 'index.html';
+                    }, 500);
+                } else {
+                    throw new Error("Credenciales inválidas");
+                }
+            } catch (error) {
+                console.error(error);
+                btn.disabled = false;
+                btn.innerHTML = "INICIAR SESIÓN";
+                btn.style.background = "#ef4444"; // Rojo error
+                msg.innerText = "ACCESO DENEGADO: " + error.message;
+                msg.style.color = "#ef4444";
+                
+                // Resetear botón tras 2 seg
+                setTimeout(() => {
+                    btn.style.background = "#00f0ff";
+                }, 2000);
+            }
+        });
+    </script>
+</body>
+</html>

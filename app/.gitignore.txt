@@ -1,0 +1,16 @@
+# Archivos de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+env/
+.env
+
+# Archivos de sistema e IDE
+.DS_Store
+.vscode/
+.idea/
+
+# Carpetas de subida (Opcional: Si las fotos son de prueba, no las subas)
+# uploads/
