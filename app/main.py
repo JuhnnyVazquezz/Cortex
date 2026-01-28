@@ -1,5 +1,5 @@
 # =========================================================================
-# CÓRTEX V17.5 - NÚCLEO CENTRAL DE OPERACIONES (GPS FIX + RED VISUAL)
+# CÓRTEX V17.6 - NÚCLEO CENTRAL (FIX FINAL: BÚSQUEDA + GPS + ALERTAS)
 # =========================================================================
 
 import shutil
@@ -15,9 +15,6 @@ from io import BytesIO
 # --- LIBRERIAS DE ANÁLISIS DE DATOS ---
 import pandas as pd
 from PIL import Image 
-
-# --- COMUNICACIÓN REAL-TIME ---
-import pusher
 
 # --- FASTAPI & REDES ---
 import uvicorn 
@@ -43,15 +40,8 @@ import models
 # 1. CONFIGURACIÓN DEL SISTEMA
 # =================================================================
 
+# MEMORIA RAM PARA GPS (Aquí viven las coordenadas en tiempo real)
 UBICACIONES_CACHE = {}
-
-pusher_client = pusher.Pusher(
-  app_id='2100678',
-  key='e7ac8c8ce7e5485c41c9',
-  secret='a0d8ba67c17329710c3c',
-  cluster='us2',
-  ssl=True
-)
 
 SECRET_KEY = "cortex_v15_ultra_secure_key_2026"
 ALGORITHM = "HS256"
@@ -63,7 +53,7 @@ FRONTEND_DIR = os.path.join(BASE_DIR, "frontend")
 app = FastAPI(
     title="CÓRTEX V17 - COMMAND CENTER",
     description="Sistema de Inteligencia Táctica y Operaciones",
-    version="17.5.0"
+    version="17.6.0"
 )
 
 app.add_middleware(
@@ -74,6 +64,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Montaje de archivos estáticos
 if os.path.exists(FRONTEND_DIR):
     app.mount("/frontend", StaticFiles(directory=FRONTEND_DIR), name="frontend")
     templates = Jinja2Templates(directory=FRONTEND_DIR)
@@ -84,6 +75,7 @@ app.mount("/static", StaticFiles(directory="uploads"), name="static")
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
+# Crear tablas si no existen
 models.Base.metadata.create_all(bind=database.engine)
 
 def get_db():
@@ -94,7 +86,7 @@ def get_db():
         db.close()
 
 # =================================================================
-# 2. SISTEMA DE ALERTAS (WEBSOCKETS + PUSHER)
+# 2. SISTEMA DE ALERTAS (WEBSOCKETS)
 # =================================================================
 
 class ConnectionManager:
@@ -104,16 +96,19 @@ class ConnectionManager:
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
+        print(f"✅ PANTALLA C5i CONECTADA: {websocket.client.host}")
 
     def disconnect(self, websocket: WebSocket):
         if websocket in self.active_connections:
             self.active_connections.remove(websocket)
 
     async def broadcast(self, message: str):
+        # Envia el mensaje a TODAS las pantallas (PC)
         for connection in self.active_connections:
             try:
                 await connection.send_text(message)
-            except:
+            except Exception as e:
+                print(f"Error WS: {e}")
                 pass
 
 manager = ConnectionManager()
@@ -123,52 +118,70 @@ async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     try:
         while True:
-            await websocket.receive_text()
+            await websocket.receive_text() # Mantener vivo
     except WebSocketDisconnect:
         manager.disconnect(websocket)
 
-# --- MODIFICACIÓN 1: Actualización de caché con Timestamp para detectar desconexión ---
+# =================================================================
+# 3. MÓDULO GPS (FIX COMPROBADO)
+# =================================================================
+
 @app.post("/api/v1/ubicacion/")
 async def recibir_ubicacion(
     lat: str = Form(...), 
     lon: str = Form(...), 
-    oficial_id: str = Form("Oficial"),
+    oficial_id: str = Form(...), 
     codigo: str = Form("10-8")
 ):
     try:
-        if lat != "0.0" and lon != "0.0":
-            # Guardamos timestamp numérico para calcular tiempo real
+        # Validación básica para no guardar ceros o nulos
+        if lat and lon and lat != "0.0" and lon != "0.0":
+            
+            # --- GUARDADO COMPATIBLE CON MAPA Y CELULAR ---
             UBICACIONES_CACHE[oficial_id] = {
-                "lat": lat, 
-                "lon": lon, 
+                "latitud": lat,   # Clave corregida
+                "longitud": lon,  # Clave corregida
                 "ts": datetime.now().timestamp(), 
-                "hora": datetime.now().strftime("%H:%M:%S")
+                "hora": datetime.now().strftime("%H:%M:%S"),
+                "status": "ONLINE",
+                "oficial": oficial_id
             }
         
-        pusher_client.trigger('canal-operaciones', 'evento-gps', {
-            'lat': lat, 'lon': lon, 'oficial': oficial_id, 'codigo': codigo,
-            'hora': datetime.now().strftime("%H:%M:%S")
-        })
-        return {"status": "ok", "mensaje": "Ubicación actualizada"}
+        return {"status": "ok", "mensaje": "Coordenadas actualizadas"}
     except Exception as e:
+        print(f"❌ ERROR GPS: {e}")
         return {"status": "error", "mensaje": str(e)}
 
-# --- MODIFICACIÓN 2: El Endpoint que FALTABA para que el mapa lea los datos ---
 @app.get("/api/v1/ubicacion/{oficial_id}")
 async def obtener_ubicacion_gps(oficial_id: str):
     # 1. Buscar coincidencia exacta
-    if oficial_id in UBICACIONES_CACHE:
-        return UBICACIONES_CACHE[oficial_id]
+    datos = UBICACIONES_CACHE.get(oficial_id)
     
-    # 2. Fallback: Si no está el ID exacto, devolvemos el último registrado (para pruebas)
-    if len(UBICACIONES_CACHE) > 0:
-        ultimo_id = list(UBICACIONES_CACHE.keys())[-1]
-        return UBICACIONES_CACHE[ultimo_id]
+    if datos:
+        return datos
+    
+    # 2. Fallback: Evitar error 404 en el mapa
+    return {
+        "latitud": 0, 
+        "longitud": 0, 
+        "status": "WAITING_SIGNAL",
+        "ts": 0
+    }
 
-    raise HTTPException(status_code=404, detail="Sin señal GPS")
+def resolver_coordenadas(lat, lon, oficial_id="Oficial"):
+    # Intenta usar las coordenadas que vienen en la petición
+    if lat and lon and lat != "0.0" and lat != "0" and lon != "0.0": 
+        return lat, lon
+    
+    # Si vienen vacías, buscamos la última posición GPS conocida del oficial en Cache
+    if oficial_id in UBICACIONES_CACHE: 
+        return UBICACIONES_CACHE[oficial_id]["latitud"], UBICACIONES_CACHE[oficial_id]["longitud"]
+    
+    # Fallback final (Centro de Hermosillo)
+    return "29.072967", "-110.955919"
 
 # =================================================================
-# 3. MOTORES DE INTELIGENCIA (LPR & BÚSQUEDA)
+# 4. MOTORES DE INTELIGENCIA (BÚSQUEDA RESTAURADA)
 # =================================================================
 
 PLATE_RECOGNIZER_TOKEN = "164762dba606541691236b0f6855e08fe0538a76"
@@ -179,7 +192,8 @@ def consultar_plate_recognizer(img_bytes):
             'https://api.platerecognizer.com/v1/plate-reader/',
             data=dict(regions=['mx']),
             files=dict(upload=img_bytes),
-            headers={'Authorization': f'Token {PLATE_RECOGNIZER_TOKEN}'}
+            headers={'Authorization': f'Token {PLATE_RECOGNIZER_TOKEN}'},
+            timeout=10 
         )
         resultado = response.json()
         if 'results' in resultado and len(resultado['results']) > 0:
@@ -188,71 +202,148 @@ def consultar_plate_recognizer(img_bytes):
     except:
         return None
 
-def buscar_en_db(placa, db):
-    """ Busca antecedentes priorizando DELITOS GRAVES """
-    resultados = [] 
+# --- ENDPOINT CONSULTA MÓVIL (LÓGICA RESTAURADA) ---
+@app.get("/api/v1/movil/consulta/{placa}")
+async def consulta_placa_movil(placa: str, db: Session = Depends(get_db)):
+    print(f"📱 MÓVIL CONSULTANDO: {placa}") 
     
-    # A. Kardex (Vehículos de Interés)
-    try:
-        kardex = db.query(models.VehiculoInteres).filter(models.VehiculoInteres.placa == placa).all()
+    # 1. Limpieza Básica
+    placa_input_clean = placa.replace("-", "").replace(" ", "").upper().strip()
+    
+    # 2. BÚSQUEDA ROBUSTA (RESTITUIDA)
+    # Usamos ILIKE y REPLACE en SQL para ignorar guiones y espacios en la BD también
+    registros = db.query(models.Vehiculo).join(models.Incidente)\
+        .filter(func.replace(func.replace(models.Vehiculo.placas, '-', ''), ' ', '').ilike(f"%{placa_input_clean}%"))\
+        .order_by(models.Incidente.fecha_incidente.desc())\
+        .all()
+    
+    # 3. Si no hay registros, buscamos en KARDEX (Vehículos de Interés sin incidente)
+    kardex_matches = []
+    if not registros:
+        kardex = db.query(models.VehiculoInteres).filter(func.replace(func.replace(models.VehiculoInteres.placa, '-', ''), ' ', '').ilike(f"%{placa_input_clean}%")).all()
         for k in kardex:
-            resultados.append({
-                "origen": "KARDEX",
+            kardex_matches.append({
                 "titulo": f"¡ALERTA: {k.estatus}!",
-                "color": "ROJO" if k.estatus in ["ROBADO", "SECUESTRO"] else "NARANJA",
-                "vehiculo": f"{k.marca} {k.modelo}",
                 "narrativa": k.notas,
-                "fecha": k.fecha_registro.strftime("%Y-%m-%d")
+                "vehiculo": f"{k.marca} {k.modelo}",
+                "color": "ROJO",
+                "fecha": k.fecha_registro.strftime("%Y-%m-%d"),
+                "info_extra": "LISTA NEGRA KARDEX"
             })
-    except: pass
 
-    # B. Incidentes (Historial operativo)
-    # ORDENAMOS POR FECHA DESCENDENTE (LO MAS NUEVO PRIMERO)
-    vehs = db.query(models.Vehiculo).filter(models.Vehiculo.placas == placa).join(models.Incidente).order_by(models.Incidente.fecha_incidente.desc()).all()
-    
-    # ⚠️ LÓGICA DE PRIORIDAD VISUAL
-    palabras_clave_rojas = ['ROBO', 'HOMICIDIO', 'ARMA', 'SECUESTRO', 'DETONACIONES']
-    
-    for v in vehs:
-        inc = v.incidente
-        delito = inc.tipo_incidente.upper()
-        
-        # Determinar color
-        color = "ROJO" if any(x in delito for x in palabras_clave_rojas) else "NARANJA"
-        
-        item = {
-            "origen": "INCIDENTE",
-            "titulo": f"ANTECEDENTE: {delito}",
-            "color": color,
-            "vehiculo": f"{v.marca} {v.modelo}",
-            "info_extra": f"Folio: {inc.folio_interno}",
-            "narrativa": f"{inc.descripcion_hechos}",
-            "fecha": inc.fecha_incidente.strftime("%Y-%m-%d") if inc.fecha_incidente else "S/F"
-        }
-        
-        # Si es rojo, lo ponemos al principio de la lista, si no, al final
-        if color == "ROJO":
-            resultados.insert(0, item)
-        else:
-            resultados.append(item)
-
-    if resultados:
+    # 4. Procesamiento de Resultados
+    if not registros and not kardex_matches:
         return {
-            "resultado": "POSITIVO", "placa_detectada": placa, "existe_registro": True, 
-            "alertas": resultados, "cantidad_alertas": len(resultados)
+            "resultado": "LIMPIO",
+            "color": "VERDE",
+            "mensaje": f"Placa {placa_input_clean} sin reportes."
         }
-    return { "resultado": "NEGATIVO", "placa_detectada": placa, "existe_registro": False }
+    
+    # Preparamos la lista para la alerta
+    alertas_para_escritorio = []
+    palabras_clave_rojas = ["ROBO", "HOMICIDIO", "SECUESTRO", "ARMAS", "DETONACIONES"]
+    
+    # Agregamos primero los de KARDEX si hubo
+    alertas_para_escritorio.extend(kardex_matches)
 
-def resolver_coordenadas(lat, lon, oficial_id="Oficial"):
-    if lat and lon and lat != "0.0" and lat != "0" and lon != "0.0": return lat, lon
-    if oficial_id in UBICACIONES_CACHE: return UBICACIONES_CACHE[oficial_id]["lat"], UBICACIONES_CACHE[oficial_id]["lon"]
-    if UBICACIONES_CACHE:
-        ultimo = list(UBICACIONES_CACHE.values())[-1]
-        return ultimo["lat"], ultimo["lon"]
-    return "29.072967", "-110.955919"
+    vehiculo_prioritario = None 
+
+    for v in registros:
+        inc = v.incidente
+        es_grave = any(k in inc.tipo_incidente.upper() for k in palabras_clave_rojas)
+        color = "ROJO" if es_grave else "NARANJA"
+        
+        datos_alerta = {
+            "titulo": inc.tipo_incidente,
+            "narrativa": inc.descripcion_hechos,
+            "vehiculo": f"{v.marca} {v.modelo}",
+            "color": color,
+            "fecha": str(inc.fecha_incidente),
+            "info_extra": f"FOLIO: {inc.folio_interno}"
+        }
+        
+        alertas_para_escritorio.append(datos_alerta)
+
+        if es_grave and vehiculo_prioritario is None:
+            vehiculo_prioritario = v 
+            
+    # Datos para la tarjeta principal del celular
+    dato_principal = alertas_para_escritorio[0]
+    
+    # --- 🚨 DISPARAR ALERTA EN PANTALLA PC (WEBSOCKETS) ---
+    # Usamos la ubicación del móvil (OFICIAL_MOVIL_01)
+    lat_alerta, lon_alerta = resolver_coordenadas("0.0", "0.0", "OFICIAL_MOVIL_01")
+    
+    await manager.broadcast(json.dumps({
+        "tipo": "ALERTA_CRITICA",
+        "placa": placa_input_clean,
+        "lat": lat_alerta,
+        "lon": lon_alerta,
+        "cantidad": len(alertas_para_escritorio),
+        "alertas_detalle": alertas_para_escritorio
+    }))
+    print(f"🚨 ALERTA ENVIADA A PC: {placa_input_clean}")
+
+    # 5. Responder al Celular
+    return {
+        "resultado": "ALERTA",
+        "color": "ROJO", 
+        "mensaje": f"¡{len(alertas_para_escritorio)} ALERTAS!",
+        "data": { # Para la tarjeta principal (Legacy support)
+            "placa": placa_input_clean,
+            "vehiculo": dato_principal["vehiculo"],
+            "delito": dato_principal["titulo"],
+            "fecha": dato_principal["fecha"],
+            "folio": dato_principal.get("info_extra", ""),
+            "narrativa": dato_principal["narrativa"]
+        },
+        "historial": alertas_para_escritorio 
+    }
+
+# --- ENDPOINT VISIÓN (LPR) ---
+@app.post("/api/v1/vision/placa")
+async def vision_lpr(
+    archivo: UploadFile = File(...), 
+    lat: str=Form("0.0"), 
+    lon: str=Form("0.0"), 
+    oficial_id: str=Form("Oficial"), 
+    db: Session = Depends(get_db)
+):
+    try:
+        content = await archivo.read()
+        placa = consultar_plate_recognizer(content)
+        
+        if not placa: 
+            return {"resultado": "NEGATIVO", "placa_detectada": "NO VISIBLE", "existe_registro": False}
+        
+        # Reutilizamos la lógica de consulta móvil para consistencia
+        # NOTA: Llamamos a la lógica interna, no al endpoint HTTP para ahorrar tiempo
+        res = await consulta_placa_movil(placa, db)
+        
+        # Inyectamos la placa detectada real
+        res["placa_detectada"] = placa
+        
+        # Si fue positivo, la alerta ya se disparó dentro de consulta_placa_movil
+        # Pero necesitamos asegurarnos que la ubicación sea la de la FOTO, no la del cache
+        if res.get("resultado") == "ALERTA":
+             # Re-broadcast con la ubicación exacta de la foto si está disponible
+             if lat != "0.0":
+                 await manager.broadcast(json.dumps({
+                    "tipo": "ALERTA_CRITICA",
+                    "placa": placa,
+                    "lat": lat,
+                    "lon": lon,
+                    "cantidad": len(res.get("historial", [])),
+                    "alertas_detalle": res.get("historial", [])
+                }))
+
+        return res
+    except Exception as e: 
+        print(f"Error Vision: {e}")
+        return {"error": str(e)}
 
 # =================================================================
-# 4. FUNCIONES UTILITARIAS
+# 5. ENDPOINTS DE SOPORTE (GEO, USUARIOS, ESTADISTICAS)
 # =================================================================
 
 def comprimir_imagen(upload_file: UploadFile) -> str:
@@ -275,116 +366,6 @@ def comprimir_imagen(upload_file: UploadFile) -> str:
 def generar_folio_interno():
     return f"CTX-{datetime.now().year}-{uuid.uuid4().hex[:4].upper()}"
 
-# =================================================================
-# 5. ENDPOINTS OPERATIVOS (IPH / LPR / MÓVIL)
-# =================================================================
-
-@app.get("/api/v1/placa/texto/{placa}")
-async def manual_lpr(placa: str, lat: str="0.0", lon: str="0.0", oficial_id: str="Oficial", db: Session = Depends(get_db)):
-    clean = re.sub(r'[^A-Z0-9]', '', placa.upper())
-    lat_final, lon_final = resolver_coordenadas(lat, lon, oficial_id)
-    res = buscar_en_db(clean, db)
-    if res["resultado"] == "POSITIVO":
-        await manager.broadcast(json.dumps({
-            "tipo": "ALERTA_CRITICA", "placa": clean, "alertas_detalle": res["alertas"], 
-            "cantidad": res["cantidad_alertas"], "lat": lat_final, "lon": lon_final
-        }))
-    return res
-
-@app.get("/api/v1/movil/consulta/{placa}")
-async def consulta_placa_movil(placa: str, db: Session = Depends(get_db)):
-    print(f"📱 MÓVIL CONSULTANDO: {placa}") 
-    
-    # 1. Limpieza
-    placa_input_clean = placa.replace("-", "").replace(" ", "").upper().strip()
-    
-    # 2. Búsqueda de TODOS los registros
-    registros = db.query(models.Vehiculo).join(models.Incidente)\
-        .filter(func.replace(func.replace(models.Vehiculo.placas, '-', ''), ' ', '').ilike(f"%{placa_input_clean}%"))\
-        .order_by(models.Incidente.fecha_incidente.desc())\
-        .all()
-    
-    # 3. Si no hay nada, responder limpio
-    if not registros:
-        return {
-            "resultado": "LIMPIO",
-            "color": "VERDE",
-            "mensaje": f"Placa {placa_input_clean} sin reportes."
-        }
-    
-    # 4. PREPARAR LISTA COMPLETA PARA EL C5i (ESCRITORIO) 
-    alertas_para_escritorio = []
-    palabras_clave_rojas = ["ROBO", "HOMICIDIO", "SECUESTRO", "ARMAS", "DETONACIONES"]
-    
-    vehiculo_prioritario = None 
-
-    for v in registros:
-        inc = v.incidente
-        es_grave = any(k in inc.tipo_incidente.upper() for k in palabras_clave_rojas)
-        color = "ROJO" if es_grave else "NARANJA"
-        
-        # Guardamos en la lista global
-        alertas_para_escritorio.append({
-            "titulo": inc.tipo_incidente,
-            "narrativa": inc.descripcion_hechos,
-            "vehiculo": f"{v.marca} {v.modelo}",
-            "color": color,
-            "fecha": str(inc.fecha_incidente)
-        })
-
-        if es_grave and vehiculo_prioritario is None:
-            vehiculo_prioritario = v 
-        
-    if vehiculo_prioritario is None:
-        vehiculo_prioritario = registros[0]
-
-    inc_prio = vehiculo_prioritario.incidente
-
-    # --- 🚨 DISPARAR ALERTA EN PANTALLA PC (WEBSOCKETS) ---
-    lat_alerta, lon_alerta = resolver_coordenadas("0.0", "0.0", "Oficial")
-    
-    await manager.broadcast(json.dumps({
-        "tipo": "ALERTA_CRITICA",
-        "placa": vehiculo_prioritario.placas,
-        "lat": lat_alerta,
-        "lon": lon_alerta,
-        "cantidad": len(registros),
-        "alertas_detalle": alertas_para_escritorio 
-    }))
-    
-    # 5. Responder al Celular
-    return {
-        "resultado": "ALERTA",
-        "color": "ROJO", 
-        "mensaje": f"¡{len(registros)} REPORTES ENCONTRADOS!",
-        "data": {
-            "placa": vehiculo_prioritario.placas,
-            "vehiculo": f"{vehiculo_prioritario.marca} {vehiculo_prioritario.modelo}",
-            "delito": inc_prio.tipo_incidente,
-            "fecha": str(inc_prio.fecha_incidente),
-            "folio": inc_prio.folio_interno,
-            "narrativa": inc_prio.descripcion_hechos[:150] + "..."
-        },
-        "historial": alertas_para_escritorio 
-    }
-
-@app.post("/api/v1/vision/placa")
-async def vision_lpr(archivo: UploadFile = File(...), lat: str=Form("0.0"), lon: str=Form("0.0"), oficial_id: str=Form("Oficial"), db: Session = Depends(get_db)):
-    try:
-        content = await archivo.read()
-        placa = consultar_plate_recognizer(content)
-        if not placa: return {"resultado": "NEGATIVO", "placa_detectada": "NO VISIBLE", "existe_registro": False}
-        lat_final, lon_final = resolver_coordenadas(lat, lon, oficial_id)
-        res = buscar_en_db(placa, db)
-        if res["resultado"] == "POSITIVO":
-            await manager.broadcast(json.dumps({
-                "tipo": "ALERTA_CRITICA", "placa": placa, "alertas_detalle": res["alertas"], 
-                "cantidad": res["cantidad_alertas"], "lat": lat_final, "lon": lon_final
-            }))
-        return res
-    except Exception as e: return {"error": str(e)}
-
-# --- GEOCODING ---
 @app.get("/api/v1/geo/reverse/")
 def geocodificacion_inversa(lat: str, lon: str):
     try:
@@ -406,7 +387,6 @@ def buscar_direccion(q: str):
     except: pass
     return []
 
-# --- CRUD INCIDENTES V17 ---
 @app.post("/api/v1/incidentes/")
 async def upsert_incidente(
     id_incidente: str = Form(""), folio_c5i: str = Form(""), descripcion: str = Form(...), razonamiento: str = Form(""), 
@@ -601,123 +581,71 @@ def normalizar_nombre(nombre):
     n = nombre.upper().strip()
     return n.replace("EL ", "").replace("LA ", "").replace("ALIAS ", "").strip()
 
-# --- BUSCA ESTA FUNCIÓN EN TU main.py Y REEMPLÁZALA COMPLETA ---
-
+# --- MÓDULO RED NEURAL ENRIQUECIDO V33 ---
 @app.get("/api/v1/inteligencia/red/")
 def obtener_red_vinculos(db: Session = Depends(get_db)):
-    nodes = []; edges = []; ids_nodos_agregados = set(); personas_unicas = {}; vehiculos_unicos = {}
+    nodes = []; edges = []; ids = set()
     
-    # Traemos más incidentes para que la red se vea "poblada" (hasta que filtren)
-    incidentes = db.query(models.Incidente).order_by(models.Incidente.fecha_registro_sistema.desc()).limit(1000).all()
-
+    # Traemos incidentes recientes
+    incidentes = db.query(models.Incidente).order_by(models.Incidente.fecha_registro_sistema.desc()).limit(200).all()
+    
     for inc in incidentes:
-        try:
-            id_inc_node = f"inc_{inc.id_incidente}"
-            
-            # Imagen
-            img_url = None
-            if inc.evidencias and len(inc.evidencias) > 0:
-                img_url = f"http://localhost:8000/static/{inc.evidencias[0].ruta_archivo_segura}"
-            
-            # HTML Tooltip (Solo info del incidente)
-            titulo_inc = f"""
-            <div style='background:white; color:black; padding:8px; border:1px solid #ccc; border-radius:4px;'>
-                <b style='color:#0d6efd;'>{inc.tipo_incidente}</b><br>
-                <span style='font-size:10px;'>{inc.folio_interno}</span><br>
-                <span style='font-size:10px;'>📅 {inc.fecha_incidente}</span><br>
-                <span style='font-size:10px;'>📍 {inc.colonia}</span>
-                {f"<img src='{img_url}' width='100%' style='margin-top:5px;border-radius:3px;'>" if img_url else ""}
-            </div>
-            """
+        nid = f"inc_{inc.id_incidente}"
+        
+        # Detectar primera imagen para mostrarla en el nodo
+        foto = None
+        if inc.evidencias and len(inc.evidencias) > 0:
+            foto = f"http://192.168.248.28:8000/static/{inc.evidencias[0].ruta_archivo_segura}"
 
-            if id_inc_node not in ids_nodos_agregados:
-                node = {
-                    "id": id_inc_node, 
-                    "label": inc.tipo_incidente[:15], 
-                    "title": titulo_inc,
-                    "group": "incidente", 
-                    "colonia": inc.colonia,  # Dato para filtrar
-                    "font": {"color": "white", "face": "Roboto"}
-                }
-                
-                # Diseño del Nodo Incidente
-                if img_url:
-                    node.update({"shape": "circularImage", "image": img_url, "size": 30, "borderWidth":3, "color": {"border": "#0d6efd", "background":"white"}})
-                else:
-                    node.update({"shape": "dot", "color": "#3b82f6", "size": 20})
-                
-                nodes.append(node)
-                ids_nodos_agregados.add(id_inc_node)
+        if nid not in ids:
+            nodes.append({
+                "id": nid, 
+                "label": inc.tipo_incidente, 
+                "group": "incidente",
+                "folio": inc.folio_interno,
+                "colonia": inc.colonia,
+                "municipio": getattr(inc, "municipio", "HERMOSILLO"),
+                "narrativa": inc.descripcion_hechos, # DATA REAL COMPLETA
+                "image": foto, # FOTO REAL
+                "db_id": inc.id_incidente # ID PARA ABRIR EXPEDIENTE
+            })
+            ids.add(nid)
+        
+        # Vehiculos
+        for v in inc.vehiculos:
+            vid = f"veh_{v.id_vehiculo}"
+            label_v = f"{v.marca} {v.modelo}"
+            if vid not in ids:
+                nodes.append({
+                    "id": vid, 
+                    "label": label_v, 
+                    "group": "vehiculo",
+                    "placa": v.placas, # PLACA REAL
+                    "color_veh": v.color
+                })
+                ids.add(vid)
+            edges.append({"from": nid, "to": vid})
 
-            # --- PERSONAS (CORRECCIÓN DE COLORES) ---
-            for p in inc.personas:
-                nombre_norm = normalizar_nombre(p.nombre_alias)
-                id_per_node = personas_unicas.get(nombre_norm)
+        # Personas
+        for p in inc.personas:
+            pid = f"per_{p.id_persona}"
+            if pid not in ids:
+                # Normalizar Rol
+                es_victima = p.tipo_involucrado.upper() in ["AFECTADO", "VICTIMA", "DENUNCIANTE"]
+                tipo_norm = "VICTIMA" if es_victima else "IMPUTADO"
                 
-                # LÓGICA DE COLOR ESTRICTA
-                es_victima = p.tipo_involucrado.upper() in ["AFECTADO", "VICTIMA", "VÍCTIMA", "DENUNCIANTE"]
-                color_p = "#22c55e" if es_victima else "#ef4444" # Verde vs Rojo
-                
-                if not id_per_node:
-                    id_per_node = f"per_{p.id_persona}_{uuid.uuid4().hex[:4]}"
-                    personas_unicas[nombre_norm] = id_per_node
-                    
-                    nodes.append({
-                        "id": id_per_node, 
-                        "label": nombre_norm, 
-                        "group": "persona",
-                        "tipo_persona": "VICTIMA" if es_victima else "PRESUNTO", # Para filtrar
-                        "title": f"<b>{p.nombre_alias}</b><br>{p.tipo_involucrado}<br>Edad: {p.edad}",
-                        "shape": "dot", 
-                        "color": color_p, 
-                        "size": 15, 
-                        "font": {"color": "#fca5a5" if not es_victima else "#86efac"}
-                    })
-                
-                # La arista (línea) también hereda el color
-                edges.append({"from": id_inc_node, "to": id_per_node, "color": {"color": color_p, "opacity": 0.4}})
+                nodes.append({
+                    "id": pid, 
+                    "label": p.nombre_alias, 
+                    "group": "persona", 
+                    "tipo_persona": tipo_norm, 
+                    "edad": p.edad,
+                    "vestimenta": p.vestimenta
+                })
+                ids.add(pid)
+            edges.append({"from": nid, "to": pid})
 
-            # --- VEHÍCULOS ---
-            for v in inc.vehiculos:
-                placa = v.placas.replace("-","").replace(" ","").strip().upper() if v.placas else "S/P"
-                llave = placa if len(placa) > 2 else f"AUTO_{v.marca}_{v.modelo}"
-                id_veh_node = vehiculos_unicos.get(llave)
-                
-                # Tooltip SOLO del vehículo
-                tt_veh = f"""
-                <div style='background:white; color:black; padding:5px; border-radius:3px;'>
-                    <b>{v.marca} {v.modelo}</b><br>
-                    <span style='background:#000;color:white;padding:2px 4px;border-radius:3px;'>{placa}</span>
-                </div>
-                """
-
-                if not id_veh_node:
-                    id_veh_node = f"veh_{v.id_vehiculo}_{uuid.uuid4().hex[:4]}"
-                    vehiculos_unicos[llave] = id_veh_node
-                    
-                    node_v = {
-                        "id": id_veh_node, 
-                        "label": f"{v.marca}\n{placa}", 
-                        "group": "vehiculo",
-                        "title": tt_veh, 
-                        "shape": "dot", 
-                        "color": "#f59e0b", # Amarillo
-                        "size": 15,
-                        "font": {"color": "#fcd34d"}
-                    }
-                    # Si quieres que el vehículo tenga foto si el incidente la tiene, descomenta esto:
-                    # if img_url: node_v.update({"shape": "circularImage", "image": img_url})
-
-                    nodes.append(node_v)
-                
-                edges.append({"from": id_inc_node, "to": id_veh_node, "color": {"color": "#f59e0b", "opacity": 0.4}})
-        except: continue
-    
     return {"nodes": nodes, "edges": edges}
-
-# =================================================================
-# 7. USUARIOS & WEB
-# =================================================================
 
 @app.get("/api/v1/users/")
 def get_users(db: Session = Depends(get_db)):
@@ -781,11 +709,5 @@ async def confirmar_carga(request: Request, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "ok", "mensaje": f"{count} registros procesados."}
 
-# =================================================================
-# 8. ARRANQUE DEL SERVIDOR (MOTOR UVICORN)
-# =================================================================
 if __name__ == "__main__":
-    # "main:app" -> Archivo main.py, objeto app
-    # host="0.0.0.0" -> Permite conexiones desde la red (celular)
-    # reload=True -> Reinicia el servidor automáticamente si editas código
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

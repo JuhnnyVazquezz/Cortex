@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CÓRTEX V19.5 | INTELLIGENCE SYSTEM</title>
+    <title>CÓRTEX V32 | SISTEMA INTEGRAL RESTAURADO</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
@@ -11,79 +11,114 @@
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://leaflet.github.io/Leaflet.heat/dist/leaflet-heat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet" type="text/css" />
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://leaflet.github.io/Leaflet.heat/dist/leaflet-heat.js"></script>
-    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
     
     <style>
-        :root { --sidebar-w: 260px; --primary-grad: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); --accent: #0ea5e9; --bg-body: #f1f5f9; --text-main: #334155; }
-        body { background-color: var(--bg-body); color: var(--text-main); font-family: 'Roboto', sans-serif; overflow-x: hidden; }
-        .sidebar { position: fixed; width: var(--sidebar-w); height: 100vh; background: var(--primary-grad); color: white; top:0; left:0; z-index: 1000; border-right: 1px solid rgba(255,255,255,0.1); }
-        .brand-box { padding: 30px 20px; text-align: center; background: rgba(0,0,0,0.2); border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .nav-link { color: #94a3b8; padding: 15px 25px; transition: 0.3s; font-weight: 500; border-left: 4px solid transparent; letter-spacing: 0.5px; display: flex; align-items: center; cursor: pointer; }
-        .nav-link:hover { background: rgba(255,255,255,0.05); color: white; padding-left: 30px; }
-        .nav-link.active { background: linear-gradient(90deg, rgba(14,165,233,0.15) 0%, transparent 100%); color: var(--accent); border-left-color: var(--accent); }
-        .top-header { position: fixed; height: 70px; left: var(--sidebar-w); right: 0; top: 0; background: white; border-bottom: 1px solid #e2e8f0; z-index: 900; display: flex; align-items: center; padding: 0 30px; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
-        .main-content { margin-left: var(--sidebar-w); margin-top: 70px; padding: 30px; }
-        
-        /* TARJETAS Y MAPAS */
-        .card { border: none; border-radius: 8px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #e2e8f0; transition: transform 0.2s; }
-        .card:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
-        .card-header { background: white; border-bottom: 1px solid #f1f5f9; font-weight: 700; color: #1e293b; text-transform: uppercase; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
-        
-        #mapaCaptura, #mapaDetalle { height: 400px; width: 100%; border-radius: 8px; border: 1px solid #cbd5e1; }
-        #mapaCalor { height: 500px; width: 100%; border-radius: 8px; border: 1px solid #cbd5e1; }
-        #redNeuralCanvas { height: 75vh; width: 100%; background: #0f172a; border-radius: 8px; }
-        #mapa-tactico { height: 75vh; width: 100%; border: 3px solid #0d6efd; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); z-index: 1; }
-        
-        /* --- ESTILOS BUSCADOR INTELIGENTE (NUEVO) --- */
-        .search-container { position: relative; width: 100%; margin-bottom: 10px; }
-        .search-results { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; max-height: 250px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none; }
-        .search-item { padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; transition: background 0.2s; }
-        .search-item:hover { background-color: #f8fafc; color: var(--accent); }
-        .search-item i { margin-right: 8px; color: #94a3b8; }
+        /* VARIABLES GLOBALES */
+        :root { 
+            --sidebar-width: 280px; 
+            --header-height: 70px;
+            --primary-gradient: linear-gradient(180deg, #0f172a 0%, #1e293b 100%); 
+            --color-accent: #0ea5e9; 
+            --bg-body: #f8fafc; 
+            --text-main: #334155; 
+            --color-danger: #ef4444;
+            --color-success: #10b981;
+            --color-warning: #f59e0b;
+        }
 
-        /* ICONOS LEAFLET */
-        .leaflet-div-icon { background: transparent; border: none; }
-        .oficial-dot-online { width: 18px; height: 18px; background: #0d6efd; border-radius: 50%; border: 2px solid #ffffff; box-shadow: 0 0 10px #0d6efd; animation: pulso-vivo 1.5s infinite; }
-        .oficial-dot-offline { width: 18px; height: 18px; background: #6c757d; border-radius: 50%; border: 2px solid #ffffff; box-shadow: 0 0 5px #000; }
-        @keyframes pulso-vivo { 0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(13, 110, 253, 0); } 100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(13, 110, 253, 0); } }
+        body { 
+            background-color: var(--bg-body); 
+            color: var(--text-main); 
+            font-family: 'Roboto', sans-serif; 
+            overflow-x: hidden; 
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* SIDEBAR */
+        .sidebar { position: fixed; width: var(--sidebar-width); height: 100vh; background: var(--primary-gradient); color: white; top: 0; left: 0; z-index: 1000; border-right: 1px solid rgba(255,255,255,0.1); box-shadow: 4px 0 15px rgba(0,0,0,0.3); display: flex; flex-direction: column; }
+        .brand-box { padding: 25px 15px; text-align: center; background: rgba(0,0,0,0.2); border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .nav-link { color: #94a3b8; padding: 14px 20px; transition: all 0.3s ease; font-weight: 500; border-left: 4px solid transparent; letter-spacing: 0.5px; display: flex; align-items: center; cursor: pointer; text-decoration: none; font-size: 0.95rem; }
+        .nav-link:hover { background: rgba(255,255,255,0.05); color: white; padding-left: 25px; }
+        .nav-link.active { background: linear-gradient(90deg, rgba(14,165,233,0.15) 0%, transparent 100%); color: var(--color-accent); border-left-color: var(--color-accent); text-shadow: 0 0 10px rgba(14, 165, 233, 0.5); }
+        
+        /* HEADER */
+        .top-header { position: fixed; height: var(--header-height); left: var(--sidebar-width); right: 0; top: 0; background: white; border-bottom: 1px solid #e2e8f0; z-index: 900; display: flex; align-items: center; padding: 0 30px; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.03); }
+        .main-content { margin-left: var(--sidebar-width); margin-top: var(--header-height); padding: 30px; transition: all 0.3s ease; }
+        
+        /* CARDS */
+        .card { border: none; border-radius: 10px; background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; border: 1px solid #e2e8f0; transition: transform 0.2s, box-shadow 0.2s; }
+        .card:hover { box-shadow: 0 10px 25px rgba(0,0,0,0.08); transform: translateY(-2px); }
+        .card-header { background: white; border-bottom: 1px solid #f1f5f9; font-weight: 700; color: #1e293b; text-transform: uppercase; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; letter-spacing: 0.5px; }
+        
+        /* MAPAS Y CANVAS */
+        #mapaCaptura { height: 400px; width: 100%; border-radius: 8px; border: 1px solid #cbd5e1; }
+        #mapaDetalle { height: 300px; width: 100%; border-radius: 8px; border: 1px solid #cbd5e1; }
+        #mapaCalor { height: 450px; width: 100%; border-radius: 8px; border: 1px solid #cbd5e1; }
+        #redNeuralCanvas { height: 80vh; width: 100%; background: #020617; border-radius: 8px; border: 1px solid #334155; position: relative; }
+        #mapa-tactico { height: 80vh; width: 100%; border: 3px solid #0d6efd; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 1; }
+        
+        /* --- ESTILO PARA EL TOOLTIP DE VIS.JS 4.21.0 --- */
+        div.vis-tooltip {
+            position: absolute;
+            visibility: hidden;
+            padding: 0;
+            white-space: nowrap; 
+            font-family: 'Roboto', sans-serif;
+            font-size: 14px;
+            color: #000;
+            background-color: transparent; /* Importante: Transparente para que se vea la tarjeta */
+            border-radius: 0;
+            border: none;
+            box-shadow: none;
+            pointer-events: none;
+            z-index: 99999;
+        }
+
+        /* BUSCADOR */
+        .search-container { position: relative; width: 100%; margin-bottom: 15px; }
+        .search-results { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; max-height: 250px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); display: none; }
+        .search-item { padding: 12px 15px; cursor: pointer; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; transition: background 0.2s; }
+        .search-item:hover { background-color: #f0f9ff; color: var(--color-accent); font-weight: 500; }
+
+        /* ICONOS MAPA */
+        .oficial-dot-online { width: 18px; height: 18px; background: #0d6efd; border-radius: 50%; border: 3px solid #ffffff; box-shadow: 0 0 15px #0d6efd; animation: pulso-vivo 1.5s infinite; }
+        .oficial-dot-offline { width: 18px; height: 18px; background: #64748b; border-radius: 50%; border: 3px solid #ffffff; box-shadow: 0 0 5px #000; }
+        @keyframes pulso-vivo { 0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 12px rgba(13, 110, 253, 0); } 100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(13, 110, 253, 0); } }
         
         /* MODO OSCURO */
-        body.dark-mode { --bg-body: #050505; --card-bg: #111827; --text-main: #f1f5f9; --border-color: #374151; --input-bg: #1f2937; --input-text: #ffffff; --placeholder: #94a3b8; }
+        body.dark-mode { --bg-body: #020617; --card-bg: #0f172a; --text-main: #f1f5f9; --border-color: #334155; --input-bg: #1e293b; --input-text: #ffffff; --placeholder: #94a3b8; }
         body.dark-mode, body.dark-mode .main-content { background-color: var(--bg-body) !important; color: var(--text-main) !important; }
         body.dark-mode .top-header, body.dark-mode .card { background-color: var(--card-bg) !important; border-color: var(--border-color) !important; color: var(--text-main) !important; }
-        body.dark-mode .card-header { background-color: rgba(255,255,255,0.05) !important; border-bottom: 1px solid var(--border-color) !important; color: #fff !important; }
-        body.dark-mode .text-muted { color: #cbd5e1 !important; }
+        body.dark-mode .card-header { background-color: rgba(255,255,255,0.03) !important; border-bottom: 1px solid var(--border-color) !important; color: #fff !important; }
+        body.dark-mode .text-muted { color: #94a3b8 !important; }
         body.dark-mode .text-dark { color: #fff !important; }
-        body.dark-mode .small, body.dark-mode small { color: #94a3b8 !important; }
-        body.dark-mode .form-control, body.dark-mode .form-select, body.dark-mode textarea { background-color: var(--input-bg) !important; border: 1px solid var(--border-color) !important; color: var(--input-text) !important; }
-        body.dark-mode .form-control::placeholder, body.dark-mode textarea::placeholder { color: var(--placeholder) !important; opacity: 1; }
-        body.dark-mode .form-control:focus, body.dark-mode .form-select:focus { background-color: #000 !important; border-color: var(--accent) !important; color: #fff !important; }
+        body.dark-mode .small { color: #94a3b8 !important; }
+        body.dark-mode .form-control, body.dark-mode .form-select, body.dark-mode textarea { background-color: var(--input-bg) !important; border: 1px solid #475569 !important; color: #ffffff !important; font-weight: 500; }
+        body.dark-mode .form-control:focus { border-color: var(--color-accent) !important; box-shadow: 0 0 8px rgba(14, 165, 233, 0.4) !important; }
         body.dark-mode .table { color: #e2e8f0 !important; --bs-table-bg: transparent !important; }
-        body.dark-mode .table thead th { background-color: #0f172a !important; color: var(--accent) !important; border-bottom: 1px solid #475569 !important; }
-        body.dark-mode .table tbody td { background-color: transparent !important; border-bottom: 1px solid #1f2937 !important; color: #e2e8f0 !important; }
-        body.dark-mode .table-hover tbody tr:hover td { background-color: rgba(14, 165, 233, 0.15) !important; }
-        body.dark-mode .accordion-button { background-color: #1f2937; color: white; }
-        body.dark-mode .accordion-button:not(.collapsed) { background-color: rgba(14,165,233,0.1); color: var(--accent); }
-        body.dark-mode .btn-close { filter: invert(1); }
-        body.dark-mode .modal-content { background-color: #111827; border: 1px solid #374151; color: white; }
-        
-        /* AJUSTES MODO OSCURO PARA BUSCADOR */
-        body.dark-mode .search-results { background-color: #1f2937; border-color: #374151; }
-        body.dark-mode .search-item { border-bottom-color: #374151; color: #e2e8f0; }
-        body.dark-mode .search-item:hover { background-color: #111827; }
+        body.dark-mode .table thead th { background-color: #1e293b !important; color: var(--color-accent) !important; border-bottom: 2px solid #475569 !important; text-transform: uppercase; font-size: 0.85rem; }
+        body.dark-mode .table tbody td { background-color: transparent !important; border-bottom: 1px solid #334155 !important; color: #e2e8f0 !important; }
+        body.dark-mode .table-hover tbody tr:hover td { background-color: rgba(14, 165, 233, 0.1) !important; }
+        body.dark-mode .search-results { background-color: #1e293b; border-color: #475569; }
+        body.dark-mode .search-item { border-bottom-color: #334155; color: white; }
+        body.dark-mode .search-item:hover { background-color: #334155; }
 
         /* SPLASH SCREEN */
         #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 99999; transition: opacity 0.8s ease-out, visibility 0.8s ease-out; }
         .splash-loader-container { position: relative; width: 500px; height: auto; max-width: 90%; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .splash-logo-img { width: 180px; height: auto; z-index: 2; margin-bottom: 20px; filter: drop-shadow(0 0 25px rgba(14,165,233,0.8)); animation: logo-breath 3s infinite ease-in-out; }
-        @keyframes logo-breath { 0%, 100% { transform: scale(1); filter: drop-shadow(0 0 25px rgba(14,165,233,0.8)); } 50% { transform: scale(1.05); filter: drop-shadow(0 0 40px rgba(14,165,233,1)); } }
+        .splash-logo-img { width: 180px; height: auto; z-index: 2; margin-bottom: 30px; filter: drop-shadow(0 0 25px rgba(14,165,233,0.8)); animation: logo-breath 3s infinite ease-in-out; }
+        @keyframes logo-breath { 0%, 100% { transform: scale(1); filter: drop-shadow(0 0 25px rgba(14,165,233,0.8)); } 50% { transform: scale(1.05); filter: drop-shadow(0 0 45px rgba(14,165,233,1)); } }
         .splash-hidden { opacity: 0; visibility: hidden; }
     </style>
 </head>
@@ -91,42 +126,55 @@
 
 <div id="splash-screen">
     <div class="splash-loader-container">
-        <img src="cortex.logo" class="splash-logo-img" alt="CÓRTEX LOGO">
-        <h2 class="text-white fw-bold" style="letter-spacing: 5px; font-size: 1.5rem;">CÓRTEX SYSTEM</h2>
+        <img src="cortex-logo.png" onerror="this.src='/static/logo.png'" class="splash-logo-img" alt="CÓRTEX LOGO">
+        <p class="text-info small tracking-widest mt-1 uppercase" style="letter-spacing: 2px align-items: center">CENTRO DE OPERACIONES Y RESPUESTA TÁCTICA ESTRATÉGICA</p>
+        
+        <h2 class="text-white fw-bold mt-3" style="letter-spacing: 5px; font-size: 3rem; text-shadow: 0 0 15px cyan; font-family: 'Share Tech Mono', monospace;">CÓRTEX</h2>
+        <div class="progress mt-5 rounded-pill" style="width: 300px; height: 6px; background-color: rgba(255,255,255,0.1);">
+            <div class="progress-bar progress-bar-striped progress-bar-animated bg-info" style="width: 100%"></div>
+        </div>
+        <p class="text-secondary mt-3 small tracking-widest font-monospace" id="loading-text">INICIANDO PROTOCOLOS DE SEGURIDAD V32...</p>
     </div>
-    <div style="position:fixed; bottom:30px; color:rgba(255,255,255,0.3); font-size:0.8rem; letter-spacing: 4px; font-weight:bold;">J.F.V.A. SYSTEMS</div>
+    <div style="position:fixed; bottom: 20px; color: #475569; font-size: 0.7rem;">SISTEMA DE INTELIGENCIA GUBERNAMENTAL</div>
 </div>
 
 <div class="sidebar">
     <div class="brand-box">
-        <div class="d-flex align-items-center justify-content-center mb-2">
-            <i class="bi bi-shield-lock-fill text-info fs-3 me-2"></i>
-            <span class="fw-bold fs-4" style="letter-spacing: 2px;">CÓRTEX</span>
+        <div class="d-flex flex-column align-items-center justify-content-center mb-3">
+            <img src="cortex-logo.png" onerror="this.style.display='none'; document.getElementById('icon-fallback').classList.remove('d-none');" style="width: 100px; height: auto; margin-bottom: 15px;">
+            <i id="icon-fallback" class="bi bi-shield-lock-fill text-info fs-1 d-none mb-3"></i>
         </div>
-        <div class="badge bg-white text-dark bg-opacity-10 py-1 px-2 rounded-pill" style="font-size: 0.6rem;">V19.5 FINAL</div>
+        <div class="text-secondary small fw-bold text-center text-uppercase" style="font-size: 0.65rem; line-height: 1.4; color: #94a3b8;">
+            Centro de Operaciones y Respuesta Táctica Estratégica
+        </div>
+        <div class="badge bg-white text-dark bg-opacity-10 py-1 px-3 rounded-pill mt-3 border border-secondary" style="font-size: 0.65rem; letter-spacing: 1px;">C5i OPERATIVO</div>
     </div>
-    <nav class="nav flex-column mt-4 p-2 gap-1">
-        <a class="nav-link active" id="nav-captura" onclick="cambiarVista('captura')"><i class="bi bi-crosshair"></i> OPERACIONES</a>
-        <a class="nav-link" id="nav-rastreo" onclick="cambiarVista('rastreo')"><i class="bi bi-radar"></i> RASTREO GPS</a>
-        <a class="nav-link" id="nav-bitacora" onclick="cambiarVista('bitacora')"><i class="bi bi-table"></i> BITÁCORA</a>
-        <a class="nav-link" id="nav-analitica" onclick="cambiarVista('analitica')"><i class="bi bi-pie-chart-fill"></i> INTELIGENCIA</a>
-        <a class="nav-link" id="nav-neural" onclick="cambiarVista('neural')"><i class="bi bi-diagram-3-fill"></i> RED NEURAL</a>
-        <a class="nav-link" id="nav-admin" onclick="cambiarVista('admin')"><i class="bi bi-shield-shaded"></i> AGENTES</a>
+    
+    <nav class="nav flex-column mt-3 p-2 gap-1 flex-grow-1">
+        <a class="nav-link active" id="nav-captura" onclick="cambiarVista('captura')"><i class="bi bi-crosshair me-3 fs-5"></i> OPERACIONES</a>
+        <a class="nav-link" id="nav-rastreo" onclick="cambiarVista('rastreo')"><i class="bi bi-radar me-3 fs-5"></i> RASTREO GPS</a>
+        <a class="nav-link" id="nav-bitacora" onclick="cambiarVista('bitacora')"><i class="bi bi-table me-3 fs-5"></i> BITÁCORA</a>
+        <a class="nav-link" id="nav-analitica" onclick="cambiarVista('analitica')"><i class="bi bi-pie-chart-fill me-3 fs-5"></i> INTELIGENCIA</a>
+        <a class="nav-link" id="nav-neural" onclick="cambiarVista('neural')"><i class="bi bi-diagram-3-fill me-3 fs-5"></i> RED NEURAL</a>
+        <a class="nav-link" id="nav-admin" onclick="cambiarVista('admin')"><i class="bi bi-shield-shaded me-3 fs-5"></i> GESTIÓN AGENTES</a>
     </nav>
-    <div class="mt-auto p-3">
-        <button class="btn btn-outline-danger w-100 btn-sm fw-bold" onclick="cerrarSesion()">CERRAR SESIÓN</button>
+    
+    <div class="p-3">
+        <button class="btn btn-outline-danger w-100 btn-sm fw-bold" onclick="window.location.reload()"><i class="bi bi-power me-2"></i> REINICIAR SISTEMA</button>
     </div>
 </div>
 
 <div class="top-header">
-    <h6 class="m-0 fw-bold text-primary" style="letter-spacing: 1px;">PANEL DE CONTROL UNIFICADO</h6>
+    <h6 class="m-0 fw-bold text-primary d-flex align-items-center" style="letter-spacing: 1px;">
+        <i class="bi bi-grid-3x3-gap-fill me-2"></i> PANEL DE CONTROL UNIFICADO
+    </h6>
     <div class="d-flex align-items-center gap-3">
-        <button class="btn btn-danger btn-sm fw-bold shadow-sm" onclick="probarSirena()"><i class="bi bi-megaphone-fill me-1"></i> TEST ALERTA</button>
-        <div class="input-group input-group-sm" style="width: 250px;">
-            <input type="text" class="form-control" id="buscadorGlobal" placeholder="Buscar folio, placa..." onkeypress="if(event.key==='Enter') buscarDatos()">
+        <button class="btn btn-danger btn-sm fw-bold shadow-sm px-3" onclick="probarSirena()"><i class="bi bi-megaphone-fill me-1"></i> TEST ALERTA</button>
+        <div class="input-group input-group-sm shadow-sm" style="width: 300px;">
+            <input type="text" class="form-control" id="buscadorGlobal" placeholder="Buscar folio, placa, nombre..." onkeypress="if(event.key==='Enter') buscarDatos()">
             <button class="btn btn-dark" onclick="buscarDatos()"><i class="bi bi-search"></i></button>
         </div>
-        <button class="btn btn-sm btn-outline-secondary rounded-circle" id="btnTheme"><i class="bi bi-moon-stars-fill"></i></button>
+        <button class="btn btn-sm btn-outline-secondary rounded-circle" id="btnTheme" title="Cambiar Tema"><i class="bi bi-moon-stars-fill"></i></button>
     </div>
 </div>
 
@@ -146,44 +194,22 @@
                             <div class="search-container mb-2">
                                 <div class="input-group">
                                     <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-                                    <input type="text" id="txtDireccion" class="form-control fw-bold" placeholder="Buscar calle, cruce o lugar..." onkeyup="sugerirDireccion(this.value)" autocomplete="off">
+                                    <input type="text" id="txtDireccion" class="form-control fw-bold" placeholder="Buscar calle, cruce o colonia..." onkeyup="sugerirDireccion(this.value)" autocomplete="off">
                                     <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('txtDireccion').value=''; document.getElementById('searchResults').style.display='none';"><i class="bi bi-x"></i></button>
                                 </div>
                                 <div id="searchResults" class="search-results"></div>
                             </div>
-
                             <div id="mapaCaptura" class="mb-3 border shadow-sm"></div>
-                            
                             <div class="bg-light p-3 rounded border">
                                 <div class="d-flex justify-content-between mb-2">
-                                    <small class="fw-bold text-muted text-uppercase">COORDENADAS</small>
-                                    <small class="text-primary cursor-pointer" onclick="mapaCaptura.locate({setView: true, maxZoom: 16});"><i class="bi bi-crosshair"></i> MI UBICACIÓN</small>
+                                    <small class="fw-bold text-muted text-uppercase">COORDENADAS EXACTAS</small>
+                                    <small class="text-primary cursor-pointer fw-bold" onclick="mapaCaptura.locate({setView: true, maxZoom: 16});"><i class="bi bi-crosshair"></i> USAR MI UBICACIÓN</small>
                                 </div>
                                 <div class="row g-2">
-                                    <div class="col-12">
-                                        <div class="form-floating">
-                                            <input type="text" id="inputCalle" class="form-control form-control-sm bg-white fw-bold" placeholder="Calle">
-                                            <label for="inputCalle">CALLE / CRUCE</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-12">
-                                        <div class="form-floating">
-                                            <input type="text" id="inputColonia" class="form-control form-control-sm bg-white" placeholder="Colonia">
-                                            <label for="inputColonia">COLONIA / SECTOR</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text bg-secondary text-white">LAT</span>
-                                            <input type="text" id="lat" class="form-control font-monospace bg-white text-center fw-bold" readonly>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text bg-secondary text-white">LON</span>
-                                            <input type="text" id="lon" class="form-control font-monospace bg-white text-center fw-bold" readonly>
-                                        </div>
-                                    </div>
+                                    <div class="col-12"><div class="form-floating"><input type="text" id="inputCalle" class="form-control form-control-sm fw-bold text-uppercase" placeholder="Calle"><label for="inputCalle">CALLE / CRUCE</label></div></div>
+                                    <div class="col-12"><div class="form-floating"><input type="text" id="inputColonia" class="form-control form-control-sm text-uppercase" placeholder="Colonia"><label for="inputColonia">COLONIA / SECTOR</label></div></div>
+                                    <div class="col-6"><div class="input-group input-group-sm"><span class="input-group-text bg-secondary text-white fw-bold">LAT</span><input type="text" id="lat" class="form-control font-monospace text-center fw-bold" readonly></div></div>
+                                    <div class="col-6"><div class="input-group input-group-sm"><span class="input-group-text bg-secondary text-white fw-bold">LON</span><input type="text" id="lon" class="form-control font-monospace text-center fw-bold" readonly></div></div>
                                 </div>
                             </div>
                         </div>
@@ -191,9 +217,9 @@
                 </div>
                 <div class="col-lg-7">
                     <div class="card h-100">
-                        <div class="card-header">
-                            <span class="text-primary"><i class="bi bi-file-text-fill me-2"></i> INFORME POLICIAL (V17)</span>
-                            <button type="button" id="btnCancelarEdicion" class="btn btn-xs btn-outline-secondary d-none" onclick="cancelarEdicion()">Cancelar Edición</button>
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <span><i class="bi bi-file-earmark-text-fill me-2"></i> INFORME POLICIAL HOMOLOGADO (IPH)</span>
+                            <button type="button" id="btnCancelarEdicion" class="btn btn-sm btn-light text-danger fw-bold d-none shadow-sm" onclick="cancelarEdicion()"><i class="bi bi-x-circle me-1"></i> CANCELAR EDICIÓN</button>
                         </div>
                         <div class="card-body">
                             <div class="row g-2 mb-3">
@@ -203,46 +229,31 @@
                                 <div class="col-md-3"><label class="small fw-bold text-muted">HORA</label><input type="time" id="horaEvento" class="form-control fw-bold"></div>
                             </div>
                             <div class="mb-3">
-                                <label class="small fw-bold text-muted">INCIDENTE DE ALTO IMPACTO</label>
-                                <select class="form-select fw-bold text-dark" id="tipoIncidente" required>
-                                    <option value="">-- SELECCIONE INCIDENTE --</option>
-                                    <option value="ACCIDENTE DE TRANSITO CON LESIONADOS">Accidente de tránsito con lesionados</option>
-                                    <option value="ACCIDENTE DE TRANSITO SIN LESIONADOS">Accidente de tránsito sin lesionados</option>
-                                    <option value="DETONACIONES DE ARMA DE FUEGO">Detonaciones de arma de fuego</option>
-                                    <option value="EXTORSION">Extorsión (Tel/Presencial)</option>
-                                    <option value="FEMINICIDIO">Feminicidio</option>
-                                    <option value="HOMICIDIO DOLOSO">Homicidio Doloso</option>
-                                    <option value="PERSONA CON ARMA DE FUEGO">Persona con arma de fuego</option>
-                                    <option value="PERSONA SOSPECHOSA">Persona sospechosa</option>
-                                    <option value="PRIVACION ILEGAL DE LA LIBERTAD">Privación ilegal de la libertad</option>
-                                    <option value="ROBO A BANCO CON VIOLENCIA">Robo a banco CON violencia</option>
-                                    <option value="ROBO A BANCO SIN VIOLENCIA">Robo a banco SIN violencia</option>
-                                    <option value="ROBO A NEGOCIO CON VIOLENCIA">Robo a negocio CON violencia</option>
-                                    <option value="ROBO A NEGOCIO SIN VIOLENCIA">Robo a negocio SIN violencia</option>
-                                    <option value="ROBO A TRANSEUNTE CON VIOLENCIA">Robo a transeúnte CON violencia</option>
-                                    <option value="ROBO A TRANSEUNTE SIN VIOLENCIA">Robo a transeúnte SIN violencia</option>
-                                    <option value="TENTATIVA DE PRIVACION DE LIBERTAD">Tentativa de privación de libertad</option>
-                                    <option value="VEHICULO SOSPECHOSO">Vehículo sospechoso</option>
-                                    <option value="OTROS">OTROS</option>
+                                <label class="small fw-bold text-muted">CLASIFICACIÓN DEL INCIDENTE</label>
+                                <select class="form-select fw-bold text-dark border-primary" id="tipoIncidente" required>
+                                    <option value="OTROS">-- SELECCIONE TIPO --</option>
+                                    <option value="ROBO A COMERCIO">ROBO A COMERCIO</option>
+                                    <option value="ROBO DE VEHICULO">ROBO DE VEHICULO</option>
+                                    <option value="ROBO A CASA HABITACION">ROBO A CASA HABITACION</option>
+                                    <option value="PERSONA SOSPECHOSA">PERSONA SOSPECHOSA</option>
+                                    <option value="HOMICIDIO DOLOSO">HOMICIDIO DOLOSO</option>
+                                    <option value="DETONACIONES">DETONACIONES ARMA FUEGO</option>
+                                    <option value="VIOLENCIA FAMILIAR">VIOLENCIA FAMILIAR</option>
+                                    <option value="ACCIDENTE DE TRANSITO">ACCIDENTE DE TRANSITO</option>
                                 </select>
                             </div>
-                            <div class="mb-3"><label class="small fw-bold text-muted">EVIDENCIA (Máx 4)</label><input type="file" id="archivos" class="form-control" multiple accept="image/*"></div>
                             <div class="row g-3 mb-3">
-                                <div class="col-md-6"><label class="small fw-bold text-muted">NARRATIVA DE HECHOS</label><textarea id="desc" class="form-control" rows="4" required placeholder="Cronología..."></textarea></div>
-                                <div class="col-md-6"><label class="small fw-bold text-muted">RAZONAMIENTO AUTORIDAD</label><textarea id="razonamiento" class="form-control" rows="4" placeholder="Actuación policial..."></textarea></div>
+                                <div class="col-md-6"><label class="small fw-bold text-muted">NARRATIVA DE HECHOS</label><textarea id="desc" class="form-control" rows="4" required placeholder="Describa la cronología..."></textarea></div>
+                                <div class="col-md-6"><label class="small fw-bold text-muted">RAZONAMIENTO</label><textarea id="razonamiento" class="form-control" rows="4" placeholder="Justificación de la actuación..."></textarea></div>
                             </div>
-                            <div class="accordion mb-4" id="accDetalles">
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header"><button class="accordion-button collapsed py-2 fw-bold text-primary" type="button" data-bs-toggle="collapse" data-bs-target="#c1">VEHÍCULOS</button></h2>
-                                    <div id="c1" class="accordion-collapse collapse" data-bs-parent="#accDetalles"><div class="accordion-body p-2"><div id="contenedorVehiculos"></div><button type="button" class="btn btn-sm btn-light w-100 text-primary fw-bold mt-2" onclick="agregarFilaVehiculo()">+ AGREGAR VEHÍCULO</button></div></div>
-                                </div>
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header"><button class="accordion-button collapsed py-2 fw-bold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#c2">PERSONAS (AFECTADOS / IMPUTADOS)</button></h2>
-                                    <div id="c2" class="accordion-collapse collapse" data-bs-parent="#accDetalles"><div class="accordion-body p-2"><div id="contenedorPersonas"></div><div class="row g-2 mt-2"><div class="col-6"><button type="button" class="btn btn-sm btn-outline-success w-100 fw-bold" onclick="agregarFilaPersona('AFECTADO')">+ AFECTADO</button></div><div class="col-6"><button type="button" class="btn btn-sm btn-outline-danger w-100 fw-bold" onclick="agregarFilaPersona('PRESUNTO')">+ PRESUNTO</button></div></div></div></div>
-                                </div>
+                            
+                            <div class="accordion mb-4 border rounded" id="accDetalles">
+                                <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed fw-bold text-primary bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#c1"><i class="bi bi-car-front-fill me-2"></i> VEHÍCULOS INVOLUCRADOS</button></h2><div id="c1" class="accordion-collapse collapse" data-bs-parent="#accDetalles"><div class="accordion-body bg-white"><div id="contenedorVehiculos"></div><button type="button" class="btn btn-sm btn-outline-primary w-100 fw-bold mt-2" onclick="agregarFilaVehiculo()">+ AGREGAR OTRO VEHÍCULO</button></div></div></div>
+                                <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed fw-bold text-dark bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#c2"><i class="bi bi-people-fill me-2"></i> PERSONAS (AFECTADOS / IMPUTADOS)</button></h2><div id="c2" class="accordion-collapse collapse" data-bs-parent="#accDetalles"><div class="accordion-body bg-white"><div id="contenedorPersonas"></div><div class="row g-2 mt-2"><div class="col-6"><button type="button" class="btn btn-sm btn-success w-100 fw-bold" onclick="agregarFilaPersona('AFECTADO')">+ AGREGAR VÍCTIMA</button></div><div class="col-6"><button type="button" class="btn btn-sm btn-danger w-100 fw-bold" onclick="agregarFilaPersona('PRESUNTO')">+ AGREGAR DETENIDO</button></div></div></div></div></div>
                             </div>
-                            <div class="d-grid"><button type="submit" id="btnGuardar" class="btn btn-primary fw-bold py-2 shadow-sm">GUARDAR REGISTRO</button></div>
-                            <div class="mt-4 pt-3 border-top d-flex gap-2 align-items-center justify-content-between"><span class="small fw-bold text-muted">ADMINISTRACIÓN DE DATOS</span><div class="d-flex gap-2"><input type="file" id="fileExcel" class="form-control form-control-sm" style="width:200px"><button type="button" class="btn btn-dark btn-sm fw-bold" onclick="subirExcel()">CARGA MASIVA</button></div></div>
+                            <div class="mb-3"><label class="small fw-bold text-muted">EVIDENCIA FOTOGRÁFICA</label><input type="file" id="archivos" class="form-control" multiple accept="image/*"></div>
+                            <div class="d-grid gap-2"><button type="submit" id="btnGuardar" class="btn btn-primary btn-lg fw-bold shadow-sm">GUARDAR REGISTRO</button></div>
+                            <div class="mt-4 pt-3 border-top d-flex gap-2 align-items-center justify-content-between bg-light p-2 rounded"><span class="small fw-bold text-muted"><i class="bi bi-file-earmark-spreadsheet me-1"></i> CARGA MASIVA</span><div class="d-flex gap-2"><input type="file" id="fileExcel" class="form-control form-control-sm" style="width:200px"><button type="button" class="btn btn-dark btn-sm fw-bold" onclick="subirExcel()">IMPORTAR EXCEL</button></div></div>
                         </div>
                     </div>
                 </div>
@@ -251,409 +262,284 @@
     </div>
 
     <div id="vista-rastreo" class="view-section d-none">
-        <div class="card h-100">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <span class="text-primary fw-bold"><i class="bi bi-geo-fill me-2"></i> UBICACIÓN DE UNIDADES EN CAMPO</span>
-                <span id="rastreo-status" class="badge bg-light text-muted border">ACTUALIZACIÓN EN VIVO</span>
+        <div class="card h-100 shadow-lg">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <span class="text-info fw-bold"><i class="bi bi-geo-fill me-2"></i> UBICACIÓN DE UNIDADES EN CAMPO</span>
+                <span id="rastreo-status" class="badge bg-secondary border">BUSCANDO SEÑAL...</span>
             </div>
-            <div class="card-body p-2"><div id="mapa-tactico"></div></div>
+            <div class="card-body p-0"><div id="mapa-tactico"></div></div>
         </div>
     </div>
 
     <div id="vista-bitacora" class="view-section d-none">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between">
-                <span><i class="bi bi-database me-2"></i> BITÁCORA OPERATIVA</span>
-                <div>
-                    <button class="btn btn-sm btn-outline-secondary me-2" onclick="prevPage()"><i class="bi bi-chevron-left"></i></button>
-                    <span id="pageInfo" class="text-muted small fw-bold">Página 1</span>
-                    <button class="btn btn-sm btn-outline-secondary ms-2" onclick="nextPage()"><i class="bi bi-chevron-right"></i></button>
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <span class="text-primary fw-bold"><i class="bi bi-database me-2"></i> REGISTRO HISTÓRICO DE OPERACIONES</span>
+                <div class="btn-group shadow-sm">
+                    <button class="btn btn-sm btn-success fw-bold" onclick="exportarExcel()"><i class="bi bi-file-excel me-1"></i> EXCEL</button>
+                    <button class="btn btn-sm btn-danger fw-bold" onclick="exportarPDF()"><i class="bi bi-file-pdf me-1"></i> PDF</button>
                 </div>
-                <div class="btn-group ms-3"><button class="btn btn-sm btn-outline-success fw-bold" onclick="exportarExcel()">EXCEL</button><button class="btn btn-sm btn-outline-danger fw-bold" onclick="exportarPDF()">PDF</button></div>
             </div>
-            <div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-dark text-uppercase small"><tr><th style="width: 15%;">INCIDENTE/FOLIO</th><th style="width: 25%;">UBICACIÓN</th><th style="width: 25%;">VEHICULO (OBJETIVO)</th><th style="width: 25%;">SINOPSIS HECHOS</th><th style="width: 10%;" class="text-end">ACCIONES</th></tr></thead><tbody id="tablaResultados"></tbody></table></div>
+            <div class="table-responsive flex-grow-1">
+                <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                    <thead class="table-dark text-uppercase small sticky-top">
+                        <tr>
+                            <th style="width:15%">FOLIO / FECHA</th>
+                            <th style="width:20%">TIPO INCIDENTE</th>
+                            <th style="width:25%">UBICACIÓN (CALLE/COL)</th>
+                            <th style="width:20%">VEHÍCULOS</th>
+                            <th style="width:10%">ESTADO</th>
+                            <th style="width:10%" class="text-end">ACCIONES</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaResultados"></tbody>
+                </table>
+            </div>
+            <div class="card-footer d-flex justify-content-between align-items-center bg-light">
+                <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="prevPage()"><i class="bi bi-chevron-left"></i> ANTERIOR</button>
+                <span id="pageInfo" class="fw-bold text-muted small bg-white px-3 py-1 rounded border">Página 1</span>
+                <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="nextPage()">SIGUIENTE <i class="bi bi-chevron-right"></i></button>
+            </div>
         </div>
     </div>
 
     <div id="vista-analitica" class="view-section d-none">
         <div class="row g-3 mb-4">
-            <div class="col-md-3"><div class="card p-3 kpi-card h-100"><h6 class="text-muted small fw-bold">TOTAL INCIDENTES</h6><div class="kpi-value text-primary" id="kpiTotal">0</div></div></div>
-            <div class="col-md-3"><div class="card p-3 kpi-card h-100" style="border-left-color:#f59e0b"><h6 class="text-muted small fw-bold">VEHÍCULOS</h6><div class="kpi-value text-warning" id="kpiVehiculos">0</div></div></div>
-            <div class="col-md-6"><div class="card p-3 bg-dark text-white h-100 d-flex flex-row align-items-center justify-content-between px-4"><div><h4 class="mb-0 fw-bold">NIVEL DE RIESGO</h4><small class="opacity-50">Cálculo en tiempo real</small></div><div class="display-6 fw-bold text-danger">ELEVADO</div></div></div>
+            <div class="col-md-3"><div class="card p-3 border-start border-5 border-primary shadow-sm h-100 d-flex flex-column justify-content-center"><h6 class="text-muted small fw-bold text-uppercase">Total Incidentes</h6><div class="display-6 fw-bold text-dark" id="kpiTotal">0</div></div></div>
+            <div class="col-md-3"><div class="card p-3 border-start border-5 border-warning shadow-sm h-100 d-flex flex-column justify-content-center"><h6 class="text-muted small fw-bold text-uppercase">Vehículos Reportados</h6><div class="display-6 fw-bold text-dark" id="kpiVehiculos">0</div></div></div>
+            <div class="col-md-6"><div class="card p-3 bg-dark text-white h-100 d-flex flex-row align-items-center justify-content-between px-4 border-start border-5 border-danger shadow"><div><h4 class="mb-0 fw-bold">NIVEL DE RIESGO</h4><small class="opacity-50 font-monospace">ANÁLISIS PREDICTIVO V24</small></div><div class="display-4 fw-bold text-danger">ALTO</div></div></div>
         </div>
         <div class="row g-4">
-            <div class="col-lg-8"><div class="card mb-4"><div class="card-header"><i class="bi bi-map-fill me-2"></i> CONCENTRACIÓN DELICTIVA (HEATMAP)</div><div class="card-body p-0"><div id="mapaCalor"></div></div></div><div class="card"><div class="card-header">TOP 5 ZONAS DE RIESGO</div><div class="card-body"><canvas id="chartColonias" height="100"></canvas></div></div></div>
+            <div class="col-lg-8">
+                <div class="card mb-4 shadow-sm"><div class="card-header bg-white fw-bold"><i class="bi bi-fire text-danger me-2"></i> MAPA DE CALOR (ZONAS ROJAS)</div><div class="card-body p-0"><div id="mapaCalor"></div></div></div>
+                <div class="card shadow-sm"><div class="card-header bg-white fw-bold"><i class="bi bi-building text-warning me-2"></i> TOP 5 COLONIAS CON MAYOR INCIDENCIA</div><div class="card-body"><canvas id="chartColonias" height="120"></canvas></div></div>
+            </div>
             <div class="col-lg-4">
-                <div class="card mb-4"><div class="card-header">INCIDENCIA POR TIPO</div><div class="card-body"><canvas id="chartDelitos" height="200"></canvas></div></div>
-                <div class="card mb-4"><div class="card-header bg-dark text-white">RADAR HORARIO</div><div class="card-body bg-dark"><canvas id="chartRadar" height="250"></canvas></div></div>
-                <div class="card"><div class="card-header">TENDENCIA SEMANAL</div><div class="card-body"><canvas id="chartDias" height="150"></canvas></div></div>
+                <div class="card mb-4 shadow-sm"><div class="card-header bg-white fw-bold">TIPO DE DELITO</div><div class="card-body"><canvas id="chartDelitos" height="200"></canvas></div></div>
+                <div class="card mb-4 shadow-sm bg-dark border-secondary"><div class="card-header bg-dark text-white border-secondary fw-bold">RADAR HORARIO (HORA PICO)</div><div class="card-body"><canvas id="chartRadar" height="250"></canvas></div></div>
+                <div class="card shadow-sm"><div class="card-header bg-white fw-bold">TENDENCIA SEMANAL</div><div class="card-body"><canvas id="chartDias" height="150"></canvas></div></div>
             </div>
         </div>
     </div>
 
     <div id="vista-neural" class="view-section d-none">
-        <div class="card h-100 bg-dark border-secondary position-relative">
-            
-            <div class="card-header bg-black border-secondary p-2">
-                <div class="row g-2 align-items-center">
-                    <div class="col-md-3">
-                        <span class="text-info fw-bold"><i class="bi bi-diagram-3 me-2"></i> RED NEURAL</span>
-                    </div>
+        <div class="card h-100 bg-dark border-secondary position-relative shadow-lg">
+            <div class="card-header bg-black border-secondary d-flex justify-content-between align-items-center p-2">
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-info fw-bold"><i class="bi bi-diagram-3 me-2"></i> RED NEURAL</span>
                     
-                    <div class="col-md-9 d-flex gap-2 justify-content-end">
-                        <select id="filtroCategoria" class="form-select form-select-sm bg-dark text-white border-secondary" style="width: 150px;" onchange="aplicarFiltrosRed()">
-                            <option value="TODOS">● VER TODO</option>
-                            <option value="incidente">🟦 INCIDENTES</option>
-                            <option value="PRESUNTO">🟥 PRESUNTOS</option>
-                            <option value="VICTIMA">🟩 VÍCTIMAS</option>
-                            <option value="vehiculo">🟨 VEHÍCULOS</option>
-                        </select>
-                        
-                        <div class="input-group input-group-sm" style="width: 250px;">
-                            <span class="input-group-text bg-dark border-secondary text-muted"><i class="bi bi-funnel"></i></span>
-                            <input type="text" id="filtroTexto" class="form-control bg-dark text-white border-secondary" placeholder="Filtrar por Colonia, Nombre, Placa..." onkeyup="aplicarFiltrosRed()">
-                        </div>
+                    <select id="filtroMunicipio" class="form-select form-select-sm bg-dark text-white border-secondary" style="width: 150px; font-size: 11px; font-weight: bold;" onchange="filtrarRed()">
+                        <option value="TODOS">📍 TODO EL ESTADO</option>
+                        <option value="HERMOSILLO">HERMOSILLO</option>
+                        <option value="CAJEME">CAJEME</option>
+                        <option value="NOGALES">NOGALES</option>
+                        <option value="GUAYMAS">GUAYMAS</option>
+                        <option value="SAN LUIS RC">SAN LUIS R.C.</option>
+                    </select>
+                </div>
 
-                        <button class="btn btn-sm btn-outline-info" onclick="aplicarFiltrosRed()"><i class="bi bi-search"></i></button>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="resetFiltrosRed()"><i class="bi bi-arrow-counterclockwise"></i></button>
+                <div class="d-flex gap-2">
+                    <div class="input-group input-group-sm" style="width: 250px;">
+                        <span class="input-group-text bg-dark border-secondary text-secondary"><i class="bi bi-search"></i></span>
+                        <input type="text" id="buscadorRed" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Buscar placa, color, alias..." onkeyup="filtrarRed()">
                     </div>
+                    <button class="btn btn-sm btn-outline-light" title="Descargar Evidencia" onclick="capturarRed()"><i class="bi bi-camera-fill"></i></button>
+                    <button class="btn btn-sm btn-outline-info" onclick="network.fit()"><i class="bi bi-arrows-fullscreen"></i></button>
                 </div>
             </div>
-            
-            <div class="card-body p-0 position-relative" style="overflow: hidden;">
-                <div id="redNeuralCanvas" style="height: 80vh; width: 100%; background: #0f172a;"></div>
-
+            <div class="card-body p-0 position-relative">
+                <div id="redNeuralCanvas"></div>
                 <div style="position: absolute; bottom: 20px; left: 20px; z-index: 999; pointer-events: none;">
-                    <div class="card bg-black border-secondary text-white shadow-lg opacity-75" style="pointer-events: auto;">
+                    <div class="card bg-black border-secondary text-white shadow-lg opacity-90" style="pointer-events: auto;">
                         <div class="card-body p-2 small">
-                            <h6 class="fw-bold border-bottom border-secondary pb-1 mb-1 text-muted" style="font-size: 0.7rem;">SIMBOLOGÍA</h6>
-                            <div class="d-flex align-items-center mb-1"><span class="badge rounded-circle p-1 me-2" style="background:#3b82f6;"> </span> INCIDENTE</div>
-                            <div class="d-flex align-items-center mb-1"><span class="badge rounded-circle p-1 me-2" style="background:#ef4444;"> </span> PRESUNTO</div>
-                            <div class="d-flex align-items-center mb-1"><span class="badge rounded-circle p-1 me-2" style="background:#22c55e;"> </span> VÍCTIMA</div>
-                            <div class="d-flex align-items-center"><span class="badge rounded-circle p-1 me-2" style="background:#f59e0b;"> </span> VEHÍCULO</div>
+                            <h6 class="fw-bold border-bottom border-secondary pb-1 mb-1 text-muted" style="font-size: 0.7rem;">SIMBOLOGÍA TÁCTICA</h6>
+                            <div class="d-flex align-items-center mb-1"><span class="badge rounded-circle p-1 me-2" style="background:#00f0ff; box-shadow: 0 0 5px #00f0ff;"> </span> INCIDENTE (AZUL)</div>
+                            <div class="d-flex align-items-center mb-1"><span class="badge rounded-circle p-1 me-2" style="background:#ef4444; box-shadow: 0 0 5px #ef4444;"> </span> IMPUTADO (ROJO)</div>
+                            <div class="d-flex align-items-center mb-1"><span class="badge rounded-circle p-1 me-2" style="background:#10b981; box-shadow: 0 0 5px #10b981;"> </span> VÍCTIMA (VERDE)</div>
+                            <div class="d-flex align-items-center"><span class="badge rounded-circle p-1 me-2" style="background:#f59e0b; box-shadow: 0 0 5px #f59e0b;"> </span> VEHÍCULO (AMARILLO)</div>
                         </div>
                     </div>
-                </div>
-
-                <div style="position: absolute; bottom: 30px; right: 30px; z-index: 999;" class="btn-group-vertical shadow-lg">
-                    <button class="btn btn-dark border-secondary text-white" onclick="network.moveTo({scale: 1.5})"><i class="bi bi-plus-lg"></i></button>
-                    <button class="btn btn-dark border-secondary text-white" onclick="network.fit()"><i class="bi bi-arrows-fullscreen"></i></button>
-                    <button class="btn btn-dark border-secondary text-white" onclick="network.moveTo({scale: 0.5})"><i class="bi bi-dash-lg"></i></button>
                 </div>
             </div>
         </div>
     </div>
 
     <div id="vista-admin" class="view-section d-none">
-        <div class="row">
-            <div class="col-md-4"><div class="card border-primary"><div class="card-header bg-primary text-white">ALTA DE PERSONAL</div><div class="card-body"><form id="formUsuario"><div class="mb-2"><small>USUARIO</small><input type="text" id="new_user" class="form-control" required></div><div class="mb-2"><small>CONTRASEÑA</small><input type="password" id="new_pass" class="form-control" required></div><div class="mb-2"><small>NOMBRE COMPLETO</small><input type="text" id="new_name" class="form-control" required></div><div class="mb-3"><small>ROL</small><select id="new_role" class="form-select"><option value="operador">Operador</option><option value="admin">Administrador</option></select></div><button type="submit" class="btn btn-primary w-100 fw-bold">CREAR AGENTE</button></form></div></div></div>
-            <div class="col-md-8"><div class="card"><div class="card-header">FUERZA OPERATIVA ACTIVA</div><div class="table-responsive"><table class="table align-middle mb-0"><thead class="table-light"><tr><th>ID</th><th>AGENTE</th><th>ROL</th><th class="text-end">ACCIÓN</th></tr></thead><tbody id="tablaUsuarios"></tbody></table></div></div></div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card border-primary h-100 shadow-sm">
+                    <div class="card-header bg-primary text-white fw-bold"><i class="bi bi-person-plus-fill me-2"></i> ALTA DE AGENTE</div>
+                    <div class="card-body">
+                        <form id="formUsuario">
+                            <div class="mb-3"><label class="small fw-bold text-muted">USUARIO (ID SISTEMA)</label><input type="text" id="new_user" class="form-control" required placeholder="ej. agente.lopez"></div>
+                            <div class="mb-3"><label class="small fw-bold text-muted">CONTRASEÑA</label><input type="password" id="new_pass" class="form-control" required></div>
+                            <div class="mb-3"><label class="small fw-bold text-muted">NOMBRE COMPLETO</label><input type="text" id="new_name" class="form-control" required placeholder="Grado y Nombre"></div>
+                            <div class="mb-4"><label class="small fw-bold text-muted">ROL DE ACCESO</label><select id="new_role" class="form-select"><option value="operador">Operador (Básico)</option><option value="admin">Administrador (Total)</option></select></div>
+                            <button type="submit" class="btn btn-primary w-100 fw-bold shadow-sm">REGISTRAR AGENTE</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header fw-bold"><i class="bi bi-people-fill me-2"></i> FUERZA OPERATIVA ACTIVA</div>
+                    <div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th>ID SISTEMA</th><th>AGENTE</th><th>ROL</th><th class="text-end">ACCIÓN</th></tr></thead><tbody id="tablaUsuarios"></tbody></table></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div id="alertaContainer"></div>
+<audio id="sirenaAlerta" src="https://www.soundjay.com/mechanical/sounds/smoke-detector-1.mp3" preload="auto"></audio>
+
+<div class="modal fade" id="modalDetalle" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-light"><h5 class="modal-title fw-bold text-primary"><i class="bi bi-archive-fill me-2"></i> EXPEDIENTE DIGITAL</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6"><div id="mapaDetalle" class="border rounded shadow-sm"></div></div>
+                    <div class="col-md-6"><h4 id="modalTipo" class="text-danger fw-bold mb-0"></h4><div class="d-flex justify-content-between align-items-center mb-2"><span id="modalFolio" class="text-muted small font-monospace bg-light px-2 rounded"></span><span id="modalFecha" class="badge bg-secondary"></span></div><p id="modalDireccion" class="fw-bold bg-light p-2 rounded small text-uppercase mb-2 text-primary"><i class="bi bi-geo-alt me-1"></i></p><hr><h6 class="fw-bold small text-muted">SINOPSIS DE HECHOS</h6><div class="p-2 bg-light rounded border"><p id="modalNarrativa" class="small text-secondary mb-0" style="text-align:justify; max-height: 150px; overflow-y: auto;"></p></div></div>
+                </div>
+                <div class="mt-3"><h6 class="fw-bold border-bottom pb-2 text-primary small">VINCULACIONES DE INTELIGENCIA</h6><ul class="list-group list-group-flush small" id="modalListas"></ul></div>
+                <div class="mt-3"><h6 class="fw-bold border-bottom pb-2 text-primary small">EVIDENCIA FOTOGRÁFICA</h6><div id="modalFotos" class="row g-2"></div></div>
+            </div>
+            <div class="modal-footer bg-light"><button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">CERRAR EXPEDIENTE</button></div>
         </div>
     </div>
 </div>
 
-<div id="alertaContainer"></div>
-
-<div class="modal fade" id="modalDetalle" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title fw-bold">EXPEDIENTE DIGITAL</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><div class="row"><div class="col-md-6"><div id="mapaDetalle"></div></div><div class="col-md-6"><h4 id="modalTipo" class="text-danger fw-bold"></h4><p id="modalFolio" class="text-muted small"></p><p id="modalDireccion" class="fw-bold"></p><hr><p id="modalNarrativa" class="small" style="text-align:justify;"></p></div></div><div class="mt-3"><h6 class="fw-bold border-bottom pb-2">INTELIGENCIA VINCULADA</h6><ul class="list-group list-group-flush" id="modalListas"></ul></div><div class="mt-3"><h6 class="fw-bold border-bottom pb-2">EVIDENCIA</h6><div id="modalFotos" class="row g-2"></div></div></div><div class="modal-footer"><button onclick="imprimirFicha()" class="btn btn-success fw-bold">IMPRIMIR FICHA</button><button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button></div></div></div></div>
-
-<audio id="sirenaAlerta" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    // IP FIJA:
-    const API_URL = "http://10.191.119.28:8000/api/v1"; 
+    // =======================================================
+    // CONFIGURACIÓN Y VARIABLES GLOBALES
+    // =======================================================
+    // ESTA LÍNEA DETECTA TU IP AUTOMÁTICAMENTE:
+    const API_URL = "http://" + window.location.hostname + ":8000/api/v1";
     
-    let mapaCaptura, mapaTactico, mapaCalor, mapaDetalle, markerDetalle, chartDelitos, chartRadar, chartColonias, chartDias, network, marcadorCaptura;
-    let datosActuales = [], paginaActual = 1, filasPorPagina = 50;
-    
-    // VARIABLES GLOBALES RED
-    let networkNodes = null, networkEdges = null, allNodesData = []; // Añadido allNodesData
-    
-    // VARIABLES GPS
+    let mapaCaptura, mapaTactico, mapaCalor, mapaDetalle, markerDetalle, markerCaptura, markerOficial;
+    let chartDelitos, chartRadar, chartColonias, chartDias, network;
+    let datosActuales = [], paginaActual = 1, filasPorPagina = 20;
     let oficialesEnMapa = {}, rastreoInterval = null;
-    let colaAlertas = [], alertaActiva = false, incidenteActual = null;
+    let allEdgesData = [];
+    let colaAlertas = [], alertaActiva = false;
     const SONORA_LAT = 29.072967, SONORA_LON = -110.955919;
-    
-    // TIMER DE BÚSQUEDA
-    let debounceTimer;
+    let debounceTimer; 
 
-    // AUTH
-    const token = sessionStorage.getItem('cortex_token');
-    const rol = sessionStorage.getItem('cortex_role');
-    if (!token) window.location.href = 'login.html';
+    // =======================================================
+    // INICIALIZACIÓN
+    // =======================================================
+    document.addEventListener("DOMContentLoaded", () => {
+        setTimeout(() => document.getElementById('splash-screen').classList.add('splash-hidden'), 2500);
+        
+        mapaCaptura = initMap('mapaCaptura', SONORA_LAT, SONORA_LON, 13);
+        mapaCaptura.on('click', (e) => clickEnMapaCaptura(e.latlng));
+        
+        agregarFilaVehiculo(); 
+        agregarFilaPersona('AFECTADO'); 
+        agregarFilaPersona('PRESUNTO');
+        
+        buscarDatos(); 
+        
+        document.getElementById('btnTheme').addEventListener('click', () => { 
+            document.body.classList.toggle('dark-mode'); 
+            if(!document.getElementById('vista-analitica').classList.contains('d-none')) cargarDashboard();
+        });
+        
+        conectarWebSocket();
+    });
 
-    async function fetchSecure(url, options = {}) {
-        options.headers = options.headers || {};
-        options.headers['Authorization'] = `Bearer ${token}`;
-        return await fetch(url, options);
-    }
-    function cerrarSesion() { sessionStorage.clear(); window.location.href = 'login.html'; }
-
-    // --- NUEVO: FUNCIÓN INIT MAPA PRO (CARTO VOYAGER) ---
     function initMap(id, lat, lon, zoom) {
         const map = L.map(id).setView([lat, lon], zoom);
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-            subdomains: 'abcd',
-            maxZoom: 20
+            attribution: 'CÓRTEX V32', maxZoom: 20
         }).addTo(map);
         return map;
     }
 
-    // --- NUEVO: BÚSQUEDA AUTOCOMPLETE ---
-    async function sugerirDireccion(query) {
+    // =======================================================
+    // GESTIÓN DE VISTAS
+    // =======================================================
+    function cambiarVista(v){
+        document.querySelectorAll('.view-section').forEach(s => s.classList.add('d-none')); 
+        document.getElementById(`vista-${v}`).classList.remove('d-none');
+        
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active')); 
+        if(document.getElementById(`nav-${v}`)) document.getElementById(`nav-${v}`).classList.add('active');
+        
+        if(v === 'rastreo') iniciarRastreoTactico(); else detenerRastreoTactico();
+        if(v === 'neural') setTimeout(() => { cargarRedNeural(); }, 300); 
+        if(v === 'analitica') setTimeout(cargarDashboard, 200);
+        if(v === 'captura') setTimeout(()=> mapaCaptura.invalidateSize(), 200);
+        if(v === 'admin') cargarUsuarios();
+    }
+
+    // =======================================================
+    // OPERACIONES: CAPTURA Y GEOLOCALIZACIÓN
+    // =======================================================
+    function sugerirDireccion(query) {
         clearTimeout(debounceTimer);
         const resultsDiv = document.getElementById('searchResults');
+        if (!query || query.length < 3) { resultsDiv.style.display = 'none'; return; }
         
-        if (!query || query.length < 3) {
-            resultsDiv.style.display = 'none';
-            return;
-        }
-
         debounceTimer = setTimeout(async () => {
-            // Buscamos priorizando México/Sonora
-            const url = `https://nominatim.openstreetmap.org/search?format=json&q=${query}&viewbox=-113,31,-108,26&bounded=1&limit=5`;
             try {
-                const res = await fetch(url);
+                const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&viewbox=-113,31,-108,26&bounded=1&limit=5`);
                 const data = await res.json();
-                
                 resultsDiv.innerHTML = '';
                 if (data.length > 0) {
                     data.forEach(item => {
                         const div = document.createElement('div');
                         div.className = 'search-item';
                         div.innerHTML = `<i class="bi bi-geo-alt"></i> ${item.display_name}`;
-                        div.onclick = () => seleccionarSugerencia(item);
+                        div.onclick = () => {
+                            document.getElementById('txtDireccion').value = item.display_name.split(',')[0];
+                            resultsDiv.style.display = 'none';
+                            mapaCaptura.setView([item.lat, item.lon], 17);
+                            clickEnMapaCaptura({lat: item.lat, lng: item.lon});
+                        };
                         resultsDiv.appendChild(div);
                     });
                     resultsDiv.style.display = 'block';
-                } else {
-                    resultsDiv.style.display = 'none';
                 }
-            } catch (e) { console.error("Error búsqueda", e); }
-        }, 300); // 300ms delay
-    }
-
-    function seleccionarSugerencia(item) {
-        document.getElementById('txtDireccion').value = item.display_name.split(',')[0]; 
-        document.getElementById('searchResults').style.display = 'none';
-        const lat = parseFloat(item.lat);
-        const lon = parseFloat(item.lon);
-        mapaCaptura.setView([lat, lon], 17);
-        clickEnMapaCaptura({lat: lat, lng: lon}); 
-    }
-
-    // --- MEJORA: GEOCODIFICACIÓN INVERSA INTELIGENTE ---
-    async function clickEnMapaCaptura(latlng) {
-        if(marcadorCaptura) mapaCaptura.removeLayer(marcadorCaptura);
-        marcadorCaptura = L.marker(latlng).addTo(mapaCaptura);
-        
-        document.getElementById('lat').value = parseFloat(latlng.lat).toFixed(6);
-        document.getElementById('lon').value = parseFloat(latlng.lng).toFixed(6);
-        
-        document.getElementById('inputCalle').value = "...";
-        document.getElementById('inputColonia').value = "...";
-
-        try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latlng.lat}&lon=${latlng.lng}&zoom=18&addressdetails=1`);
-            const data = await res.json();
-            
-            if (data && data.address) {
-                const addr = data.address;
-                const calle = addr.road || addr.pedestrian || addr.path || addr.highway || "";
-                const colonia = addr.neighbourhood || addr.suburb || addr.residential || addr.city_district || "";
-                
-                document.getElementById('inputCalle').value = calle.toUpperCase();
-                document.getElementById('inputColonia').value = colonia.toUpperCase();
-            } else {
-                document.getElementById('inputCalle').value = "S/D";
-                document.getElementById('inputColonia').value = "";
-            }
-        } catch(e) {
-            document.getElementById('inputCalle').value = "";
-            document.getElementById('inputColonia').value = "";
-        }
-    }
-
-    // --- RASTREO TACTICO (POLLING) ---
-    function iniciarRastreoTactico() {
-        if(!mapaTactico) {
-            mapaTactico = initMap('mapa-tactico', SONORA_LAT, SONORA_LON, 13);
-        }
-        setTimeout(() => mapaTactico.invalidateSize(), 300);
-        if(rastreoInterval) clearInterval(rastreoInterval);
-        rastreoInterval = setInterval(consultarUbicaciones, 2000);
-        consultarUbicaciones();
-    }
-    function detenerRastreoTactico() { if(rastreoInterval) clearInterval(rastreoInterval); }
-
-    // --- FUNCIÓN GPS MEJORADA ---
-    async function consultarUbicaciones() {
-        const oficialId = "OFICIAL_MOVIL_01";
-        const url = `${API_URL}/ubicacion/${oficialId}?t=${new Date().getTime()}`;
-        try {
-            const res = await fetchSecure(url);
-            const badge = document.getElementById('rastreo-status');
-            if(res.ok) {
-                const data = await res.json();
-                
-                if (data.status === "WAITING_SIGNAL") {
-                     if(badge) { badge.className = "badge bg-warning text-dark border"; badge.innerHTML = `<i class="bi bi-clock"></i> ESPERANDO SEÑAL`; }
-                     return; 
-                }
-
-                const lat = parseFloat(data.latitud);
-                const lon = parseFloat(data.longitud);
-                const ts = data.ts ? parseFloat(data.ts) : 0;
-                
-                const now = new Date().getTime() / 1000;
-                const isOnline = (now - ts) < 60;
-
-                if(mapaTactico) {
-                    if(oficialesEnMapa[oficialId]) {
-                        oficialesEnMapa[oficialId].setLatLng([lat, lon]);
-                        const statusColor = isOnline ? "text-success" : "text-danger";
-                        const statusTxt = isOnline ? "EN LÍNEA" : "SIN SEÑAL";
-                        oficialesEnMapa[oficialId].setPopupContent(`<b>${oficialId}</b><br><span class="${statusColor} fw-bold">● ${statusTxt}</span>`);
-                        
-                        const el = oficialesEnMapa[oficialId].getElement();
-                        if(el) { 
-                            const dot = el.querySelector('div'); 
-                            if(dot) dot.className = isOnline ? 'oficial-dot-online' : 'oficial-dot-offline'; 
-                        }
-                    } else {
-                        const iconClass = isOnline ? 'oficial-dot-online' : 'oficial-dot-offline';
-                        const icon = L.divIcon({className:'', html:`<div class='${iconClass}'></div>`, iconSize: [20, 20], iconAnchor: [10, 10]});
-                        const m = L.marker([lat, lon], {icon:icon}).addTo(mapaTactico).bindPopup(`<b>${oficialId}</b>`);
-                        oficialesEnMapa[oficialId] = m;
-                        mapaTactico.setView([lat, lon], 16);
-                    }
-
-                    if(badge) { 
-                        if (isOnline) {
-                            badge.className = "badge bg-success border shadow-sm"; 
-                            badge.innerHTML = `<i class="bi bi-broadcast me-1"></i> ONLINE | SEÑAL RECIBIDA`;
-                        } else {
-                            badge.className = "badge bg-warning text-dark border shadow-sm"; 
-                            badge.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i> OFFLINE | ÚLTIMA: ${data.hora || 'Hace mucho'}`;
-                        }
-                    }
-                }
-            } else {
-                if(badge) { badge.className = "badge bg-danger border"; badge.innerHTML = `SIN SEÑAL`; }
-            }
-        } catch(e) { console.error("Error GPS", e); }
-    }
-
-    // --- ALERTAS ---
-    const socket = new WebSocket("ws://10.191.119.28:8000/ws/alertas");
-    socket.onmessage = (e) => { const data = JSON.parse(e.data); if(data.tipo === "ALERTA_CRITICA") encolarAlerta(data); };
-    function encolarAlerta(data) { colaAlertas.push(data); if(!alertaActiva) mostrarSiguienteAlerta(); }
-    
-    function mostrarSiguienteAlerta() {
-        if(colaAlertas.length === 0) { alertaActiva = false; return; }
-        alertaActiva = true;
-        const data = colaAlertas.shift();
-        let lat = parseFloat(data.lat), lon = parseFloat(data.lon);
-        let avisoGPS = "";
-        if (!lat || !lon || (Math.abs(lat)<1)) { lat = SONORA_LAT; lon = SONORA_LON; avisoGPS = "<br><small>⚠️ GPS OFF</small>"; }
-        
-        let lista = "";
-        if(data.alertas_detalle) {
-            data.alertas_detalle.forEach(a => {
-                let borde = a.color === 'ROJO' ? 'border-danger' : 'border-warning';
-                lista += `<div class="card mb-2 bg-dark text-white border ${borde}" style="border-left-width: 5px;"><div class="card-body p-2"><h6 class="mb-1 text-uppercase">${a.titulo}</h6><small class="text-info">${a.vehiculo}</small><p class="small text-white-50 mb-0">${a.narrativa || ''}</p></div></div>`;
-            });
-        }
-        
-        const html = `<div id="alertaRoja" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:9999; padding:20px; display:flex; flex-direction:column;">
-            <div class="d-flex justify-content-between align-items-center mb-3 p-3 rounded" style="background: linear-gradient(90deg, #dc2626 0%, #7f1d1d 100%); border: 2px solid #ef4444;">
-                <div><h1 class="m-0 fw-black text-white">¡ALERTA DE DETECCIÓN!</h1></div>
-                <div class="text-end"><h1 class="m-0 display-3 fw-bold font-monospace text-white">${data.placa}</h1><span class="badge bg-black border">${avisoGPS ? 'UBICACIÓN APROX' : 'UBICACIÓN EXACTA'}</span></div>
-            </div>
-            <div class="row flex-grow-1 g-4">
-                <div class="col-lg-8"><div class="card h-100 border-danger bg-black"><div id="mapaAlerta" style="height:100%;"></div></div></div>
-                <div class="col-lg-4"><div class="card h-100 bg-dark border-secondary"><div class="card-header text-white">HISTORIAL (${data.cantidad})</div><div class="card-body p-2 overflow-auto">${lista}</div><div class="card-footer bg-dark"><button class="btn btn-outline-light w-100" onclick="cerrarAlerta()">CERRAR / SIGUIENTE</button></div></div></div>
-            </div>
-        </div>`;
-        document.getElementById('alertaContainer').innerHTML = html;
-        document.getElementById('sirenaAlerta').play().catch(e=>{});
-        setTimeout(() => {
-            const mapA = initMap('mapaAlerta', lat, lon, 16); 
-            const icon = L.divIcon({className:'', html:"<div style='width:30px;height:30px;background:red;border-radius:50%;border:3px solid white;animation:pulse 1s infinite;'></div>"});
-            L.marker([lat, lon], {icon:icon}).addTo(mapA).bindPopup("OBJETIVO").openPopup();
-            mapA.invalidateSize(); 
+            } catch (e) { console.error(e); }
         }, 300);
     }
-    function cerrarAlerta() { document.getElementById('alertaContainer').innerHTML = ""; document.getElementById('sirenaAlerta').pause(); mostrarSiguienteAlerta(); }
 
-    // --- BITACORA ---
-    function renderTabla() {
-        const tb = document.getElementById('tablaResultados'); tb.innerHTML = "";
-        const inicio = (paginaActual - 1) * filasPorPagina;
-        const pageItems = datosActuales.slice(inicio, inicio + filasPorPagina);
-        pageItems.forEach(i => {
-            tb.innerHTML += `<tr><td><b>${i.tipo_incidente}</b><br><small>${i.folio_interno}</small></td><td>${i.colonia}</td><td>${i.vehiculos[0]?.placas||'S/P'}</td><td><small>${i.descripcion_hechos.substring(0,50)}...</small></td><td><button class="btn btn-sm btn-light" onclick="verDetalles('${i.id_incidente}')"><i class="bi bi-eye-fill"></i></button></td></tr>`;
-        });
-        document.getElementById('pageInfo').innerText = `Pág ${paginaActual}`;
-    }
-    function prevPage() { if(paginaActual > 1) { paginaActual--; renderTabla(); } }
-    function nextPage() { if(paginaActual * filasPorPagina < datosActuales.length) { paginaActual++; renderTabla(); } }
-    function verDetalles(id) {
-        const inc = datosActuales.find(i => i.id_incidente == id); incidenteActual = inc;
-        document.getElementById('modalFolio').innerText = inc.folio_interno;
-        document.getElementById('modalTipo').innerText = inc.tipo_incidente;
-        document.getElementById('modalNarrativa').innerText = inc.descripcion_hechos;
-        document.getElementById('modalDireccion').innerText = `${inc.calle}, ${inc.colonia}`;
-        const gal = document.getElementById('modalFotos'); gal.innerHTML="";
-        if(inc.evidencias) inc.evidencias.forEach(e => gal.innerHTML+=`<div class="col-3"><img src="http://${location.hostname}:8000/static/${e.ruta_archivo_segura}" class="img-fluid"></div>`);
-        
-        let html = ""; 
-        inc.vehiculos.forEach(v => html += `<li class="list-group-item d-flex justify-content-between"><span>🚗 ${v.marca} ${v.modelo}</span><span class="badge bg-dark">${v.placas}</span></li>`); 
-        inc.personas.forEach(p => { html += `<li class="list-group-item d-flex justify-content-between"><span>👤 ${p.nombre}</span><span class="badge bg-secondary">${p.tipo}</span></li>`; }); 
-        document.getElementById('modalListas').innerHTML = `<ul class="list-group">${html}</ul>`;
-
-        new bootstrap.Modal(document.getElementById('modalDetalle')).show();
-        setTimeout(() => {
-            if(!mapaDetalle) { mapaDetalle = initMap('mapaDetalle', SONORA_LAT, SONORA_LON, 14); }
-            if(inc.latitud && inc.latitud != "0.0") { 
-                const ll = [parseFloat(inc.latitud), parseFloat(inc.longitud)]; 
-                mapaDetalle.setView(ll, 16); 
-                if(markerDetalle) mapaDetalle.removeLayer(markerDetalle); 
-                markerDetalle = L.marker(ll).addTo(mapaDetalle); 
-            }
-            mapaDetalle.invalidateSize(); 
-        }, 500);
+    async function clickEnMapaCaptura(latlng) {
+        if(markerCaptura) mapaCaptura.removeLayer(markerCaptura);
+        markerCaptura = L.marker(latlng).addTo(mapaCaptura);
+        document.getElementById('lat').value = parseFloat(latlng.lat).toFixed(6);
+        document.getElementById('lon').value = parseFloat(latlng.lng).toFixed(6);
+        try {
+            const res = await fetch(`${API_URL}/geo/reverse/?lat=${latlng.lat}&lon=${latlng.lng}`);
+            const data = await res.json();
+            document.getElementById('inputCalle').value = (data.calle || "S/D").toUpperCase();
+            document.getElementById('inputColonia').value = (data.colonia || "").toUpperCase();
+        } catch(e) {}
     }
 
-    // --- MAPAS (VIEJO) - LO MANTENEMOS POR COMPATIBILIDAD PERO LA LÓGICA LA MUEVE EL BUSCADOR ---
-    async function buscarDireccionEnMapa() {
-        const q = document.getElementById('txtDireccion').value;
-        const res = await fetchSecure(`${API_URL}/geo/search/?q=${q}, Sonora`); 
-        const data = await res.json();
-        if(data.length > 0) { mapaCaptura.setView([data[0].lat, data[0].lon], 16); clickEnMapaCaptura({lat:data[0].lat, lng:data[0].lon}); }
-    }
-
-    // --- FORMULARIOS ---
-    function agregarFilaVehiculo() { document.getElementById('contenedorVehiculos').insertAdjacentHTML('beforeend', `<div class="row g-2 mb-2 fila-vehiculo"><div class="col-3"><input class="form-control form-control-sm v-placa" placeholder="PLACA"></div><div class="col-3"><input class="form-control form-control-sm v-marca" placeholder="MARCA"></div><div class="col-3"><input class="form-control form-control-sm v-modelo" placeholder="MODELO"></div><div class="col-2"><input class="form-control form-control-sm v-color" placeholder="COLOR"></div></div>`); }
-    function agregarFilaPersona(tipo) { document.getElementById('contenedorPersonas').insertAdjacentHTML('beforeend', `<div class="row g-2 mb-2 fila-persona"><div class="col-2"><span class="badge bg-secondary w-100">${tipo}</span><input type="hidden" class="p-tipo" value="${tipo}"></div><div class="col-4"><input class="form-control form-control-sm p-nombre" placeholder="NOMBRE"></div><div class="col-2"><input class="form-control form-control-sm p-edad" placeholder="EDAD"></div><div class="col-3"><input class="form-control form-control-sm p-ropa" placeholder="ROPA"></div></div>`); }
-    
     document.getElementById('formIncidente').addEventListener('submit', async (e) => { 
         e.preventDefault(); 
         const fd = new FormData();
-        fd.append('id_incidente', document.getElementById('idIncidenteEdicion').value);
-        fd.append('folio_c5i', document.getElementById('folioC5i').value);
-        fd.append('fecha_incidente', document.getElementById('fechaEvento').value);
-        fd.append('hora_incidente', document.getElementById('horaEvento').value);
-        fd.append('tipo_incidente', document.getElementById('tipoIncidente').value);
-        fd.append('descripcion', document.getElementById('desc').value);
-        fd.append('razonamiento', document.getElementById('razonamiento').value);
-        fd.append('calle', document.getElementById('inputCalle').value);
-        fd.append('colonia', document.getElementById('inputColonia').value);
-        fd.append('latitud', document.getElementById('lat').value);
-        fd.append('longitud', document.getElementById('lon').value);
-        
+        ['idIncidenteEdicion','folioC5i','fechaEvento','horaEvento','tipoIncidente','desc','razonamiento','inputCalle','inputColonia','lat','lon'].forEach(id => {
+            let key = id;
+            if(id==='idIncidenteEdicion') key='id_incidente';
+            if(id==='folioC5i') key='folio_c5i';
+            if(id==='fechaEvento') key='fecha_incidente';
+            if(id==='horaEvento') key='hora_incidente';
+            if(id==='tipoIncidente') key='tipo_incidente';
+            if(id==='desc') key='descripcion';
+            if(id==='inputCalle') key='calle';
+            if(id==='inputColonia') key='colonia';
+            if(id==='lat') key='latitud';
+            if(id==='lon') key='longitud';
+            fd.append(key, document.getElementById(id).value);
+        });
+
         const vehs = [];
         document.querySelectorAll('.fila-vehiculo').forEach(r => { 
             const p = r.querySelector('.v-placa').value; 
@@ -670,181 +556,432 @@
         
         for(let f of document.getElementById('archivos').files) fd.append('archivos', f);
 
-        await fetchSecure(`${API_URL}/incidentes/`, {method: "POST", body: fd});
-        alert("GUARDADO CORRECTAMENTE");
-        limpiar(); buscarDatos(); cambiarVista('bitacora');
+        await fetch(`${API_URL}/incidentes/`, {method: "POST", body: fd});
+        
+        Swal.fire({icon: 'success', title: 'REGISTRO GUARDADO', showConfirmButton: false, timer: 1500});
+        cancelarEdicion(); 
+        buscarDatos(); 
+        cambiarVista('bitacora');
     });
 
+    // =======================================================
+    // MÓDULO 2: BITÁCORA Y EDICIÓN
+    // =======================================================
     async function buscarDatos() {
         const q = document.getElementById('buscadorGlobal').value.trim();
-        const res = await fetchSecure(`${API_URL}/buscar/?q=${q}`);
+        const res = await fetch(`${API_URL}/buscar/?q=${q}`);
         datosActuales = await res.json();
-        paginaActual = 1;
+        paginaActual = 1; 
         renderTabla();
     }
 
-    // --- INIT ---
-    document.addEventListener("DOMContentLoaded", () => {
-        // INICIALIZAR CON MAPA PRO
-        mapaCaptura = initMap('mapaCaptura', SONORA_LAT, SONORA_LON, 13);
-        mapaCaptura.on('click', (e) => clickEnMapaCaptura(e.latlng));
+    function renderTabla() {
+        const tb = document.getElementById('tablaResultados'); tb.innerHTML = "";
+        const inicio = (paginaActual - 1) * filasPorPagina;
+        const pageItems = datosActuales.slice(inicio, inicio + filasPorPagina);
         
-        agregarFilaVehiculo(); agregarFilaPersona('AFECTADO'); agregarFilaPersona('PRESUNTO');
-        buscarDatos();
-        if(rol === 'admin') cargarUsuarios();
-        document.getElementById('btnTheme').addEventListener('click', () => { document.body.classList.toggle('dark-mode'); if(!document.getElementById('vista-analitica').classList.contains('d-none')) cargarDashboard(); });
-        setTimeout(() => document.getElementById('splash-screen').classList.add('splash-hidden'), 2000);
-    });
-
-    // --- GESTIÓN DE VISTAS (FIX PARA RED NEURAL) ---
-    function cambiarVista(v){
-        document.querySelectorAll('.view-section').forEach(s => s.classList.add('d-none')); 
-        document.getElementById(`vista-${v}`).classList.remove('d-none');
-        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active')); 
-        if(document.getElementById(`nav-${v}`)) document.getElementById(`nav-${v}`).classList.add('active');
-        
-        if(v === 'rastreo') iniciarRastreoTactico(); else detenerRastreoTactico();
-        if(v === 'neural') setTimeout(() => { cargarRedNeural(); }, 300); 
-        if(v === 'analitica') setTimeout(cargarDashboard, 200);
-    }
-
-    // --- RED NEURAL (LÓGICA MEJORADA DE BÚSQUEDA Y FOTOS) ---
-    async function cargarRedNeural() {
-        const container = document.getElementById('redNeuralCanvas');
-        try {
-            const res = await fetchSecure(`${API_URL}/inteligencia/red/`);
-            if(res.ok) {
-                const dataJson = await res.json();
-                
-                // Guardamos copia de los datos crudos para filtrar
-                allNodesData = dataJson.nodes;
-
-                if (!dataJson.nodes || dataJson.nodes.length === 0) {
-                    container.innerHTML = "<h3 class='text-white text-center pt-5'>Sin datos de inteligencia</h3>";
-                    return;
-                }
-                
-                // Inicializamos Vis.js
-                networkNodes = new vis.DataSet(dataJson.nodes);
-                networkEdges = new vis.DataSet(dataJson.edges);
-                
-                const data = { nodes: networkNodes, edges: networkEdges };
-                const options = {
-                    nodes: { 
-                        font: { color: 'white', size: 14, face:'Roboto', strokeWidth: 3, strokeColor: 'black' }, 
-                        shadow: true, borderWidth: 2 
-                    },
-                    edges: { color: {color:'rgba(255,255,255,0.2)', highlight:'#00f0ff'}, smooth: { type: 'continuous' } },
-                    physics: { 
-                        stabilization: false, 
-                        barnesHut: { gravitationalConstant: -8000, centralGravity: 0.3, springLength: 200, damping: 0.09 } 
-                    },
-                    interaction: { hover: true }
-                };
-                
-                container.innerHTML = "";
-                if (network) network.destroy();
-                network = new vis.Network(container, data, options);
-                
-                // Doble clic para enfoque
-                network.on("doubleClick", function (params) {
-                    if(params.nodes.length > 0) network.focus(params.nodes[0], { animation: true, scale: 1.5 });
-                });
-            }
-        } catch(e) { console.error(e); }
-    }
-
-    // --- FILTRADO INTELIGENTE (RED VINCULAR) ---
-    function aplicarFiltrosRed() {
-        const cat = document.getElementById('filtroCategoria').value; // TODOS, incidente, PRESUNTO...
-        const texto = document.getElementById('filtroTexto').value.toLowerCase().trim();
-        
-        if (!networkNodes) return;
-
-        // Filtramos el DataSet. Vis.js ocultará lo que no cumpla.
-        const nodosFiltrados = allNodesData.filter(node => {
-            // 1. Filtro por Categoría
-            let pasaCategoria = false;
-            if (cat === "TODOS") {
-                pasaCategoria = true;
-            } else if (cat === "incidente" || cat === "vehiculo") {
-                if (node.group === cat) pasaCategoria = true;
-            } else {
-                // Para personas (Victima/Presunto) usamos el campo especial que agregamos en Python
-                if (node.group === "persona" && node.tipo_persona === cat) pasaCategoria = true;
-            }
-
-            // 2. Filtro por Texto (Nombre, Colonia, Placa...)
-            let pasaTexto = true;
-            if (texto.length > 0) {
-                // Buscamos en label (nombre/placa) y en colonia (que metimos en el nodo)
-                const contenido = (node.label || "") + " " + (node.colonia || "");
-                if (!contenido.toLowerCase().includes(texto)) pasaTexto = false;
-            }
-
-            return pasaCategoria && pasaTexto;
+        pageItems.forEach(i => {
+            let direccion = (i.calle || i.colonia) ? `${i.calle} ${i.colonia}` : ((i.latitud && i.latitud!="0.0") ? `${i.latitud}, ${i.longitud}` : "S/D");
+            let vehs = i.vehiculos.map(v => `<span class="badge bg-secondary text-white">${v.placas}</span>`).join(' ');
+            
+            tb.innerHTML += `
+            <tr>
+                <td><b class="text-primary">${i.folio_interno}</b><br><small>${i.fecha} ${i.hora}</small></td>
+                <td class="fw-bold">${i.tipo_incidente}</td>
+                <td class="small text-uppercase"><i class="bi bi-geo-alt me-1"></i>${direccion}</td>
+                <td>${vehs}</td>
+                <td><span class="badge bg-success bg-opacity-10 text-success border border-success">ACTIVO</span></td>
+                <td class="text-end">
+                    <button class="btn btn-sm btn-light text-primary" title="Ver" onclick="verDetalles('${i.id_incidente}')"><i class="bi bi-eye-fill"></i></button>
+                    <button class="btn btn-sm btn-light text-warning" title="Editar" onclick="editar('${i.id_incidente}')"><i class="bi bi-pencil-fill"></i></button>
+                    <button class="btn btn-sm btn-light text-danger" title="Eliminar" onclick="eliminar('${i.id_incidente}')"><i class="bi bi-trash-fill"></i></button>
+                </td>
+            </tr>`;
         });
-
-        // Actualizamos la red con los nodos filtrados
-        networkNodes.clear();
-        networkNodes.add(nodosFiltrados);
-        
-        // Opcional: Reajustar vista
-        if (nodosFiltrados.length < 50) network.fit(); 
+        document.getElementById('pageInfo').innerText = `Pág ${paginaActual} de ${Math.ceil(datosActuales.length/filasPorPagina) || 1}`;
     }
 
-    function resetFiltrosRed() {
-        document.getElementById('filtroCategoria').value = "TODOS";
-        document.getElementById('filtroTexto').value = "";
-        aplicarFiltrosRed(); // Recarga todo
-        network.fit();
+    function prevPage() { if(paginaActual > 1) { paginaActual--; renderTabla(); } }
+    function nextPage() { if((paginaActual * filasPorPagina) < datosActuales.length) { paginaActual++; renderTabla(); } }
+
+    function verDetalles(id) {
+        const inc = datosActuales.find(i => i.id_incidente == id); if(!inc) return;
+        document.getElementById('modalFolio').innerText = inc.folio_interno;
+        document.getElementById('modalFecha').innerText = `${inc.fecha} ${inc.hora}`;
+        document.getElementById('modalTipo').innerText = inc.tipo_incidente;
+        document.getElementById('modalNarrativa').innerText = inc.descripcion_hechos;
+        document.getElementById('modalDireccion').innerText = `${inc.calle}, ${inc.colonia}`;
+        let html = ""; 
+        inc.vehiculos.forEach(v => html += `<li class="list-group-item d-flex justify-content-between bg-light"><span>🚗 ${v.marca} ${v.modelo}</span><span class="badge bg-dark">${v.placas}</span></li>`); 
+        inc.personas.forEach(p => { html += `<li class="list-group-item d-flex justify-content-between bg-light"><span>👤 ${p.nombre}</span><span class="badge bg-secondary">${p.tipo}</span></li>`; }); 
+        document.getElementById('modalListas').innerHTML = `<ul class="list-group list-group-flush">${html}</ul>`;
+        const gal = document.getElementById('modalFotos'); gal.innerHTML="";
+        if(inc.evidencias) inc.evidencias.forEach(e => gal.innerHTML+=`<div class="col-3"><a href="http://${location.hostname}:8000/static/${e.ruta_archivo_segura}" target="_blank"><img src="http://${location.hostname}:8000/static/${e.ruta_archivo_segura}" class="img-fluid rounded shadow-sm"></a></div>`);
+        new bootstrap.Modal(document.getElementById('modalDetalle')).show();
+        setTimeout(() => {
+            if(!mapaDetalle) { mapaDetalle = initMap('mapaDetalle', SONORA_LAT, SONORA_LON, 14); }
+            if(inc.latitud && inc.latitud != "0.0") { const ll = [parseFloat(inc.latitud), parseFloat(inc.longitud)]; mapaDetalle.setView(ll, 16); if(markerDetalle) mapaDetalle.removeLayer(markerDetalle); markerDetalle = L.marker(ll).addTo(mapaDetalle); }
+            mapaDetalle.invalidateSize(); 
+        }, 500);
     }
 
-    // --- BUSCADOR RED ORIGINAL (MANTENIDO) ---
-    function buscarEnRed() {
-        const query = document.getElementById('buscadorRed').value.toLowerCase().trim();
-        if(!query || !networkNodes) return;
-        
-        const nodosEncontrados = networkNodes.get({
-            filter: function (item) {
-                const label = item.label ? item.label.toLowerCase() : "";
-                return label.includes(query);
-            }
-        });
-        
-        if (nodosEncontrados.length > 0) {
-            const nodoObjetivo = nodosEncontrados[0].id;
-            network.selectNodes([nodoObjetivo]); 
-            network.focus(nodoObjetivo, { scale: 1.5, animation: { duration: 1000, easingFunction: 'easeInOutQuad' } }); 
-        } else {
-            alert("OBJETIVO NO ENCONTRADO EN LA RED ACTUAL");
+    function editar(id) {
+        const item = datosActuales.find(i => i.id_incidente == id); if(!item) return;
+        limpiar(); 
+        document.getElementById('idIncidenteEdicion').value = item.id_incidente;
+        document.getElementById('folioC5i').value = item.folio_c5i;
+        document.getElementById('tipoIncidente').value = item.tipo_incidente;
+        document.getElementById('desc').value = item.descripcion_hechos;
+        document.getElementById('inputCalle').value = item.calle;
+        document.getElementById('inputColonia').value = item.colonia;
+        document.getElementById('lat').value = item.latitud;
+        document.getElementById('lon').value = item.longitud;
+        document.getElementById('fechaEvento').value = item.fecha;
+        document.getElementById('horaEvento').value = item.hora;
+        document.getElementById('contenedorVehiculos').innerHTML = ""; 
+        if (item.vehiculos && item.vehiculos.length > 0) {
+            item.vehiculos.forEach(v => {
+                agregarFilaVehiculo(); const rows = document.querySelectorAll('.fila-vehiculo'); const last = rows[rows.length - 1];
+                last.querySelector('.v-placa').value = v.placas; last.querySelector('.v-marca').value = v.marca; last.querySelector('.v-modelo').value = v.modelo;
+            });
+        } else { agregarFilaVehiculo(); }
+        document.getElementById('contenedorPersonas').innerHTML = ""; 
+        if (item.personas && item.personas.length > 0) {
+            item.personas.forEach(p => {
+                agregarFilaPersona(p.tipo); const rows = document.querySelectorAll('.fila-persona'); const last = rows[rows.length - 1];
+                last.querySelector('.p-nombre').value = p.nombre; last.querySelector('.p-edad').value = p.edad; last.querySelector('.p-ropa').value = p.vestimenta;
+            });
+        } else { agregarFilaPersona('AFECTADO'); agregarFilaPersona('PRESUNTO'); }
+        document.getElementById('btnGuardar').innerText = "ACTUALIZAR REGISTRO";
+        document.getElementById('btnGuardar').className = "btn btn-warning btn-lg fw-bold shadow-sm w-100";
+        document.getElementById('btnCancelarEdicion').classList.remove('d-none');
+        cambiarVista('captura');
+    }
+
+    function cancelarEdicion() {
+        limpiar(); 
+        document.getElementById('btnCancelarEdicion').classList.add('d-none');
+        cambiarVista('bitacora'); 
+    }
+
+    async function eliminar(id) { if(confirm("¿ESTÁ SEGURO DE ELIMINAR ESTE REGISTRO?")) { await fetch(`${API_URL}/incidentes/${id}`, {method: 'DELETE'}); buscarDatos(); } }
+
+    // =======================================================
+    // MÓDULO 3: RASTREO TÁCTICO (GPS)
+    // =======================================================
+    function iniciarRastreoTactico() {
+        if(!mapaTactico) { mapaTactico = initMap('mapa-tactico', SONORA_LAT, SONORA_LON, 13); }
+        setTimeout(() => { if(mapaTactico) mapaTactico.invalidateSize(); }, 300);
+        if(rastreoInterval) clearInterval(rastreoInterval);
+        rastreoInterval = setInterval(consultarUbicaciones, 2000);
+        consultarUbicaciones();
+    }
+    function detenerRastreoTactico() { if(rastreoInterval) clearInterval(rastreoInterval); }
+    
+    async function consultarUbicaciones() {
+        const oficialId = "OFICIAL_MOVIL_01";
+        const res = await fetch(`${API_URL}/ubicacion/${oficialId}`);
+        const data = await res.json();
+        const badge = document.getElementById('rastreo-status');
+        const now = Date.now() / 1000;
+        const lastSeen = data.ts || 0;
+        const isOnline = (now - lastSeen) < 60; 
+        if(data.latitud && parseFloat(data.latitud) !== 0 && isOnline) {
+            const lat = parseFloat(data.latitud); const lon = parseFloat(data.longitud);
+            if(oficialesEnMapa[oficialId]) { oficialesEnMapa[oficialId].setLatLng([lat, lon]); const iconOn = L.divIcon({className:'', html:`<div class='oficial-dot-online'></div>`, iconSize:[20,20]}); oficialesEnMapa[oficialId].setIcon(iconOn); oficialesEnMapa[oficialId].setPopupContent("<b>OFICIAL 01</b><br><span class='text-success'>ONLINE</span>"); } else { const icon = L.divIcon({className:'', html:`<div class='oficial-dot-online'></div>`, iconSize:[20,20]}); oficialesEnMapa[oficialId] = L.marker([lat, lon], {icon:icon}).addTo(mapaTactico).bindPopup("<b>OFICIAL 01</b><br>ONLINE"); mapaTactico.setView([lat, lon], 16); }
+            if(badge) { badge.className="badge bg-success shadow"; badge.innerHTML=`<i class="bi bi-broadcast"></i> SEÑAL ACTIVA`; }
+        } else { 
+            if(oficialesEnMapa[oficialId]) { const iconOff = L.divIcon({className:'', html:`<div class='oficial-dot-offline'></div>`, iconSize:[20,20]}); oficialesEnMapa[oficialId].setIcon(iconOff); oficialesEnMapa[oficialId].setPopupContent("<b>OFICIAL 01</b><br><span class='text-secondary'>OFFLINE</span>"); }
+            if(badge) { badge.className="badge bg-secondary border"; badge.innerHTML=`<i class="bi bi-slash-circle"></i> SIN SEÑAL / OFFLINE`; } 
         }
     }
 
-    function exportarExcel() { if(datosActuales.length===0) return alert("Sin datos"); const ws = XLSX.utils.json_to_sheet(datosActuales.map(i => ({Folio:i.folio_interno, Delito:i.tipo_incidente, Colonia:i.colonia, Fecha:i.creado_en}))); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Bitacora"); XLSX.writeFile(wb, "Cortex_Export.xlsx"); }
-    function exportarPDF() { if(datosActuales.length===0) return alert("Sin datos"); const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.text("REPORTE OPERATIVO CÓRTEX", 14, 20); doc.autoTable({head: [['Folio', 'Delito', 'Colonia', 'Fecha']], body: datosActuales.map(i => [i.folio_interno, i.tipo_incidente, i.colonia, i.fecha])}); doc.save("Cortex_Reporte.pdf"); }
-    function subirExcel() { const file = document.getElementById('fileExcel').files[0]; if(!file) return alert("Seleccione archivo"); const fd = new FormData(); fd.append('file', file); fetch(`http://127.0.0.1:8000/panel/preview`, {method:"POST", body:fd}).then(r=>r.json()).then(d=>{ if(confirm(`Cargar ${d.datos.length}?`)) fetch(`http://127.0.0.1:8000/panel/confirmar`, {method:"POST", headers:{'Content-Type':'application/json'}, body:JSON.stringify({registros:d.datos})}).then(()=>{alert("Cargado"); buscarDatos();}) }); }
-    function limpiar() { document.getElementById('formIncidente').reset(); document.getElementById('idIncidenteEdicion').value=""; document.getElementById('contenedorVehiculos').innerHTML=""; document.getElementById('contenedorPersonas').innerHTML=""; agregarFilaVehiculo(); agregarFilaPersona('AFECTADO'); agregarFilaPersona('PRESUNTO'); if(marcadorCaptura) mapaCaptura.removeLayer(marcadorCaptura); document.getElementById('btnGuardar').innerText="GUARDAR REGISTRO"; document.getElementById('btnCancelarEdicion').classList.add('d-none'); }
-    function cancelarEdicion() { limpiar(); cambiarVista('captura'); }
-    function probarSirena() { document.getElementById('sirenaAlerta').play(); encolarAlerta({ placa: 'TEST-001', alertas_detalle: [{titulo: 'ROBO ARMADO', color: 'ROJO', fecha: '2025-01-10', narrativa: 'Robo a comercio', vehiculo: 'Nissan Versa Blanco'}], lat: 0, lon: 0 }); }
-    function imprimirFicha() { if(!incidenteActual) return; const w = window.open('', '', 'width=800,height=600'); w.document.write(`<html><head><title>FICHA TÉCNICA</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head><body class="p-5"><div class="text-center mb-4"><h1>FICHA DE INCIDENTE</h1><hr></div><div class="row"><div class="col-6"><h4>FOLIO: ${incidenteActual.folio_interno}</h4></div><div class="col-6 text-end"><h4>${incidenteActual.tipo_incidente}</h4></div></div><div class="card mt-3"><div class="card-header">UBICACIÓN</div><div class="card-body"><p><b>Colonia:</b> ${incidenteActual.colonia}</p><p><b>Calle:</b> ${incidenteActual.calle}</p><p><b>Coordenadas:</b> ${incidenteActual.latitud}, ${incidenteActual.longitud}</p></div></div><div class="card mt-3"><div class="card-header">NARRATIVA</div><div class="card-body">${incidenteActual.descripcion_hechos}</div></div><script>window.print();<\/script></body></html>`); w.document.close(); }
-
-    async function cargarDashboard() {
-        const res = await fetchSecure(`${API_URL}/estadisticas/`); const data = await res.json();
-        document.getElementById('kpiTotal').innerText = data.kpis.total_incidentes; document.getElementById('kpiVehiculos').innerText = data.kpis.total_vehiculos;
-        const ctxD = document.getElementById('chartDelitos').getContext('2d'); if(chartDelitos) chartDelitos.destroy();
-        chartDelitos = new Chart(ctxD, {type: 'bar', data: {labels: data.graficas.delitos_labels, datasets: [{label:'Eventos', data: data.graficas.delitos_data, backgroundColor: '#3b82f6'}]}});
-        const ctxW = document.getElementById('chartDias').getContext('2d'); if(chartDias) chartDias.destroy();
-        chartDias = new Chart(ctxW, {type: 'doughnut', data: {labels: ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'], datasets: [{data: data.graficas.dias_data, backgroundColor:['#94a3b8','#3b82f6','#3b82f6','#3b82f6','#fbbf24','#ef4444','#ef4444']}]}});
+// =======================================================
+    // MÓDULO 4: RED NEURAL V34 (FOTOS EN NODOS + ALTO DETALLE)
+    // =======================================================
+    async function cargarRedNeural() {
+        const res = await fetch(`${API_URL}/inteligencia/red/`);
+        const dataJson = await res.json();
+        const container = document.getElementById('redNeuralCanvas');
         
-        // --- USAR MAPA PRO TAMBIÉN AQUÍ ---
-        if(!mapaCalor) { mapaCalor = initMap('mapaCalor', SONORA_LAT, SONORA_LON, 7); }
-        if(data.heatmap.length > 0) L.heatLayer(data.heatmap, {radius: 25, blur: 15}).addTo(mapaCalor);
+        // Guardamos copia maestra para el buscador inteligente
+        allNodesData = dataJson.nodes;
+        allEdgesData = dataJson.edges;  //acá se guardan las conexiones
+
+        container.innerHTML = "";
+        
+        const nodesSaneados = dataJson.nodes.map(n => {
+            const labelSafe = (n.label || "S/D").replace(/<[^>]*>?/gm, "");
+            let nodeColor = "#666666"; 
+            let htmlCard = ""; 
+            
+            // CONFIGURACIÓN DE FORMA (SHAPE)
+            // Si trae imagen, usamos 'circularImage', si no, 'dot'
+            let nodeShape = 'dot';
+            let nodeImage = undefined;
+            
+            if (n.image && n.image.includes('http')) {
+                nodeShape = 'circularImage';
+                nodeImage = n.image;
+            }
+
+            // --- ESTILOS DE TARJETAS ---
+            if (n.group === "incidente") {
+                nodeColor = "#0d6efd"; 
+                htmlCard = `
+                    <div style="background:rgba(13, 110, 253, 0.95); padding:10px; border-radius:6px; box-shadow:0 5px 15px rgba(0,0,0,0.5); min-width:240px; border:2px solid white;">
+                        <b style="color:white; font-size:13px; text-transform:uppercase;"><i class="bi bi-shield-fill-exclamation"></i> ${labelSafe}</b>
+                        <div style="background:rgba(0,0,0,0.2); padding:5px; margin-top:5px; border-radius:4px;">
+                            <div style="color:#e0e7ff; font-size:10px;">FOLIO: ${n.folio || 'S/D'}</div>
+                            <div style="color:#e0e7ff; font-size:10px;">ZONA: ${n.colonia || 'S/D'}</div>
+                        </div>
+                        <div style="margin-top:5px; max-height:80px; overflow-y:auto; color:white; font-size:10px; font-style:italic; border-top:1px solid rgba(255,255,255,0.3); padding-top:3px;">
+                            "${n.narrativa || '...'}"
+                        </div>
+                    </div>`;
+            } 
+            else if (n.group === "persona") {
+                const esVictima = (n.tipo_persona === "VICTIMA" || n.tipo_persona === "AFECTADO");
+                nodeColor = esVictima ? "#198754" : "#dc3545"; 
+                
+                htmlCard = `
+                    <div style="background:${nodeColor}ee; padding:8px; border-radius:5px; color:white; min-width:180px; border:2px solid white; box-shadow:0 4px 10px rgba(0,0,0,0.5);">
+                        <b style="font-size:12px;"><i class="bi bi-person-circle"></i> ${labelSafe}</b><br>
+                        <span style="background:white; color:${nodeColor}; padding:1px 6px; font-size:9px; border-radius:10px; font-weight:bold; margin-top:3px; display:inline-block;">
+                            ${esVictima ? 'VÍCTIMA' : 'IMPUTADO'}
+                        </span>
+                    </div>`;
+            } 
+            else if (n.group === "vehiculo") {
+                nodeColor = "#ffc107"; 
+                htmlCard = `
+                <div style="background:rgba(255, 193, 7, 0.95); padding:8px; border-radius:5px; color:black; min-width:180px; border:2px solid white; box-shadow:0 4px 10px rgba(0,0,0,0.5);">
+                    <b style="font-size:12px;"><i class="bi bi-car-front-fill"></i> ${labelSafe}</b><br>
+                    <div style="background:black; color:#ffc107; padding:2px 8px; font-family:monospace; text-align:center; border-radius:4px; margin-top:4px; font-weight:bold; font-size:14px; letter-spacing:1px; border:1px solid #ffc107;">
+                        ${n.placa || 'SIN PLACA'}
+                    </div>
+                    <div style="font-size:10px; margin-top:3px; font-weight:bold;">Color: ${n.color_veh || 'DESC'}</div>
+                </div>`;
+            }
+            
+            return { 
+                ...n, 
+                label: labelSafe,
+                title: htmlCard, 
+                shape: nodeShape,      // AQUÍ SE DEFINE SI ES FOTO O PUNTO
+                image: nodeImage,      // AQUÍ VA LA URL DE LA FOTO
+                color: { 
+                    background: nodeColor, 
+                    border: 'white', 
+                    highlight: { background: nodeColor, border: '#00f0ff' } 
+                },
+                font: { color: 'white', strokeWidth: 3, strokeColor: 'black', size: 14 },
+                borderWidth: 3,
+                size: 30, // Hacemos los nodos un poco más grandes para ver las fotos
+                shadow: true
+            };
+        });
+
+        // Inicializamos datasets para filtrado dinámico
+        networkNodes = new vis.DataSet(nodesSaneados);
+        networkEdges = new vis.DataSet(dataJson.edges);
+
+        const options = {
+            nodes: { borderWidthSelected: 4 },
+            edges: { 
+                color: { color:'rgba(255,255,255,0.3)', highlight:'#00f0ff' }, 
+                width: 2, 
+                smooth: { type: 'continuous', roundness: 0.5 } 
+            },
+            physics: { 
+                stabilization: false, 
+                barnesHut: { gravitationalConstant: -12000, springConstant: 0.04, springLength: 150 } 
+            },
+            interaction: { hover: true, tooltipDelay: 50, zoomView: true } 
+        };
+        
+        if(network) network.destroy();
+        network = new vis.Network(container, { nodes: networkNodes, edges: networkEdges }, options);
+
+        // EVENTO DOBLE CLIC (ABRIR EXPEDIENTE)
+        network.on("doubleClick", function (params) {
+            if (params.nodes.length > 0) {
+                const nodeId = params.nodes[0];
+                // Buscamos en el dataset original usando el ID
+                const rawNode = dataJson.nodes.find(n => n.id === nodeId);
+                if (rawNode && rawNode.group === 'incidente' && rawNode.db_id) {
+                    verDetalles(rawNode.db_id); 
+                } else {
+                    network.focus(nodeId, { scale: 1.5, animation: true });
+                }
+            }
+        });
+    }
+    // =======================================================
+    // HELPERS, ADMIN Y EXPORTS
+    // =======================================================
+    function agregarFilaVehiculo() { document.getElementById('contenedorVehiculos').insertAdjacentHTML('beforeend', `<div class="row g-2 mb-2 fila-vehiculo"><div class="col-3"><input class="form-control form-control-sm v-placa" placeholder="PLACA"></div><div class="col-3"><input class="form-control form-control-sm v-marca" placeholder="MARCA"></div><div class="col-3"><input class="form-control form-control-sm v-modelo" placeholder="MODELO"></div><div class="col-2"><input class="form-control form-control-sm v-color" placeholder="COLOR"></div></div>`); }
+    function agregarFilaPersona(tipo) { document.getElementById('contenedorPersonas').insertAdjacentHTML('beforeend', `<div class="row g-2 mb-2 fila-persona"><div class="col-2"><span class="badge bg-secondary w-100">${tipo}</span><input type="hidden" class="p-tipo" value="${tipo}"></div><div class="col-4"><input class="form-control form-control-sm p-nombre" placeholder="NOMBRE"></div><div class="col-2"><input class="form-control form-control-sm p-edad" placeholder="EDAD"></div><div class="col-3"><input class="form-control form-control-sm p-ropa" placeholder="ROPA"></div></div>`); }
+    function limpiar() { document.getElementById('formIncidente').reset(); document.getElementById('idIncidenteEdicion').value=""; document.getElementById('contenedorVehiculos').innerHTML=""; document.getElementById('contenedorPersonas').innerHTML=""; agregarFilaVehiculo(); agregarFilaPersona('AFECTADO'); agregarFilaPersona('PRESUNTO'); if(markerCaptura) mapaCaptura.removeLayer(markerCaptura); document.getElementById('btnGuardar').innerText="GUARDAR REGISTRO"; document.getElementById('btnGuardar').className="btn btn-primary btn-lg fw-bold shadow-sm"; document.getElementById('btnCancelarEdicion').classList.add('d-none'); }
+    
+    function conectarWebSocket() { const ws = new WebSocket(`ws://${window.location.hostname}:8000/ws/alertas`); ws.onmessage = (e) => { const data = JSON.parse(e.data); if(data.tipo === "ALERTA_CRITICA") mostrarAlertaRoja(data); }; ws.onclose = () => setTimeout(conectarWebSocket, 3000); }
+    function mostrarAlertaRoja(data) { document.getElementById('sirenaAlerta').play(); const html = `<div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:9999; padding:20px; display:flex; flex-direction:column;"><div class="bg-danger text-white p-3 rounded d-flex justify-content-between align-items-center mb-3 border border-white"><h1 class="m-0 fw-bold blink">🚨 ALERTA DE DETECCIÓN 🚨</h1><h1 class="m-0 font-monospace">${data.placa}</h1></div><div class="row flex-grow-1"><div class="col-8"><div id="mapaAlerta" style="height:100%; border:2px solid red;"></div></div><div class="col-4"><div class="card h-100 bg-dark text-white border-secondary overflow-auto"><div class="card-header bg-danger text-white fw-bold">HISTORIAL (${data.cantidad})</div><div class="card-body">${data.alertas_detalle.map(a => `<div class="p-2 mb-2 border-start border-4 ${a.color==='ROJO'?'border-danger':'border-warning'} bg-secondary bg-opacity-25"><h6 class="fw-bold text-uppercase text-info">${a.titulo}</h6><small>${a.fecha} | ${a.vehiculo}</small><p class="small mb-0 mt-1 fst-italic">${a.narrativa || ''}</p></div>`).join('')}</div><div class="card-footer"><button class="btn btn-light w-100 fw-bold" onclick="document.getElementById('alertaContainer').innerHTML=''; document.getElementById('sirenaAlerta').pause();">CERRAR ALERTA</button></div></div></div></div></div>`; document.getElementById('alertaContainer').innerHTML = html; setTimeout(() => { const mapA = initMap('mapaAlerta', data.lat || SONORA_LAT, data.lon || SONORA_LON, 16); L.marker([data.lat, data.lon]).addTo(mapA).bindPopup("OBJETIVO").openPopup(); }, 200); }
+    function probarSirena() { document.getElementById('sirenaAlerta').play(); }
+
+    async function cargarUsuarios() { try { const res = await fetch(`${API_URL}/users/`); const users = await res.json(); const tb = document.getElementById('tablaUsuarios'); tb.innerHTML = ""; users.forEach(u => { tb.innerHTML += `<tr><td><small class="font-monospace">${u.id_usuario}</small></td><td><b>${u.username}</b><br><small class="text-muted">${u.nombre_completo}</small></td><td><span class="badge bg-${u.rol==='admin'?'danger':'primary'}">${u.rol.toUpperCase()}</span></td><td class="text-end"><button class="btn btn-sm btn-outline-danger" onclick="borrarUsuario(${u.id_usuario})"><i class="bi bi-trash"></i></button></td></tr>`; }); } catch(e) { console.error(e); } }
+    document.getElementById('formUsuario').addEventListener('submit', async (e) => { e.preventDefault(); const fd = new FormData(); fd.append('username', document.getElementById('new_user').value); fd.append('password', document.getElementById('new_pass').value); fd.append('nombre', document.getElementById('new_name').value); fd.append('rol', document.getElementById('new_role').value); await fetch(`${API_URL}/users/`, {method: "POST", body: fd}); alert("Agente registrado"); document.getElementById('formUsuario').reset(); cargarUsuarios(); });
+    async function borrarUsuario(id) { if(confirm("¿Eliminar acceso?")) { await fetch(`${API_URL}/users/${id}`, {method: "DELETE"}); cargarUsuarios(); } }
+    
+    function exportarExcel() { if(datosActuales.length===0) return alert("Sin datos"); const ws = XLSX.utils.json_to_sheet(datosActuales.map(i => ({Folio:i.folio_interno, Fecha:i.fecha, Delito:i.tipo_incidente, Ubicacion:`${i.calle} ${i.colonia}`, Descripcion:i.descripcion_hechos, Vehiculos: i.vehiculos.map(v=>v.placas).join(', ')}))); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Bitacora"); XLSX.writeFile(wb, `Cortex_Reporte_${new Date().toISOString().slice(0,10)}.xlsx`); }
+    function exportarPDF() { if(datosActuales.length===0) return alert("Sin datos"); const { jsPDF } = window.jspdf; const doc = new jsPDF('l'); doc.setFillColor(30, 41, 59); doc.rect(0,0,297,20,'F'); doc.setTextColor(255,255,255); doc.text("CÓRTEX INTELLIGENCE - REPORTE OPERATIVO", 14, 13); doc.autoTable({startY: 25, head: [['FOLIO', 'FECHA', 'DELITO', 'UBICACIÓN', 'VEHÍCULOS', 'DETALLE']], body: datosActuales.map(i => [i.folio_interno, i.fecha, i.tipo_incidente, `${i.colonia} ${i.calle}`, i.vehiculos.map(v=>v.placas).join(', '), i.descripcion_hechos.substring(0,50)+"..."]), theme: 'grid', headStyles: { fillColor: [15, 23, 42] }}); doc.save("Cortex_Reporte.pdf"); }
+    async function cargarDashboard() { const res = await fetch(`${API_URL}/estadisticas/`); const data = await res.json(); document.getElementById('kpiTotal').innerText = data.kpis.total_incidentes; document.getElementById('kpiVehiculos').innerText = data.kpis.total_vehiculos; if(!mapaCalor) mapaCalor = initMap('mapaCalor', SONORA_LAT, SONORA_LON, 12); if(data.heatmap.length > 0) L.heatLayer(data.heatmap, {radius: 25}).addTo(mapaCalor); const ctxD = document.getElementById('chartDelitos'); if(chartDelitos) chartDelitos.destroy(); chartDelitos = new Chart(ctxD, {type: 'bar', data: {labels: data.graficas.delitos_labels, datasets: [{label:'Eventos', data: data.graficas.delitos_data, backgroundColor: '#0d6efd'}]}}); const ctxR = document.getElementById('chartRadar'); if(chartRadar) chartRadar.destroy(); chartRadar = new Chart(ctxR, {type: 'radar', data: {labels: ['Madrugada', 'Mañana', 'Tarde', 'Noche'], datasets: [{label: 'Actividad', data: data.graficas.horas_data, borderColor: '#0dcaf0', backgroundColor: 'rgba(13,202,240,0.2)'}]}, options: { scales: { r: { grid: { color: 'gray' }, angleLines: { color: 'gray' }, pointLabels: { color: 'white' } } } }}); const ctxC = document.getElementById('chartColonias'); if(chartColonias) chartColonias.destroy(); chartColonias = new Chart(ctxC, {type: 'bar', indexAxis: 'y', data: {labels: data.graficas.colonias_labels, datasets: [{label:'Incidencia', data: data.graficas.colonias_data, backgroundColor: '#ffc107'}]}}); const ctxW = document.getElementById('chartDias'); if(chartDias) chartDias.destroy(); chartDias = new Chart(ctxW, {type: 'line', data: {labels: ['L','M','M','J','V','S','D'], datasets: [{label:'Tendencia', data: [12, 19, 3, 5, 2, 3, 10], borderColor: '#198754', tension: 0.1}]}}); }
+    // =======================================================
+    // MOTOR DE BÚSQUEDA INTELIGENTE V35 (NLP LITE)
+    // =======================================================
+    // =======================================================
+    // MOTOR DE BÚSQUEDA RELACIONAL V36 (MUESTRA EL CONTEXTO)
+    // =======================================================
+    // =======================================================
+    // MOTOR DE BÚSQUEDA TÁCTICO V37 (TEXTO + MUNICIPIO)
+    // =======================================================
+   // =======================================================
+    // MOTOR DE BÚSQUEDA V38 (HERENCIA DE MUNICIPIO ESTRICTA)
+    // =======================================================
+    function filtrarRed() {
+        let textoRaw = document.getElementById('buscadorRed').value.trim();
+        let municipioSel = document.getElementById('filtroMunicipio').value;
+        
+        if (!networkNodes || !allNodesData || !allEdgesData) return;
+
+        // 1. SI TODO ESTÁ LIMPIO, RESTAURAR
+        if (textoRaw === "" && municipioSel === "TODOS") {
+            const updates = allNodesData.map(n => ({id: n.id, hidden: false}));
+            networkNodes.update(updates);
+            if(network) network.fit();
+            return;
+        }
+
+        // 2. PREPARACIÓN: MAPEO DE MUNICIPIOS (HERENCIA)
+        // Creamos un mapa: ID_NODO -> MUNICIPIO
+        // Así los vehículos "saben" en qué ciudad están basándose en su incidente padre.
+        const mapaJurisdiccion = {};
+        
+        // A. Primero ubicamos los incidentes (padres)
+        allNodesData.forEach(n => {
+            if (n.group === 'incidente') {
+                mapaJurisdiccion[n.id] = n.municipio || "HERMOSILLO"; // Default
+            }
+        });
+        
+        // B. Luego propagamos a los hijos (vehículos/personas) usando las conexiones
+        allEdgesData.forEach(edge => {
+            // Si el origen es un incidente, el destino hereda el municipio
+            if (mapaJurisdiccion[edge.from]) {
+                mapaJurisdiccion[edge.to] = mapaJurisdiccion[edge.from];
+            }
+            // Si la conexión está al revés (raro pero posible), hereda también
+            if (mapaJurisdiccion[edge.to]) {
+                mapaJurisdiccion[edge.from] = mapaJurisdiccion[edge.to];
+            }
+        });
+
+        // 3. FILTRADO ESTRICTO
+        const textoNormalizado = textoRaw.toUpperCase().replace(/[^A-Z0-9]/g, ''); 
+        const palabrasClave = textoRaw.toLowerCase().split(" ").filter(w => w.length > 0);
+        const idsVisibles = new Set();
+
+        const nodosObjetivo = allNodesData.filter(node => {
+            // --- VALIDACIÓN DE MUNICIPIO (AHORA APLICA A TODOS) ---
+            // Recuperamos el municipio del nodo (propio o heredado)
+            const muniNodo = mapaJurisdiccion[node.id] || "HERMOSILLO";
+            
+            if (municipioSel !== "TODOS") {
+                if (muniNodo !== municipioSel) return false; // SI NO ES LA CIUDAD, SE VA.
+            }
+
+            // --- VALIDACIÓN DE TEXTO ---
+            if (textoRaw !== "") {
+                const contenidoNode = `
+                    ${node.label || ""} ${node.colonia || ""} ${node.narrativa || ""} 
+                    ${node.color_veh || ""} ${node.folio || ""} ${node.placa || ""}
+                `.toLowerCase();
+                const placaNode = (node.placa || "").toUpperCase().replace(/[^A-Z0-9]/g, '');
+
+                const coincidePlaca = (textoNormalizado.length > 3 && placaNode.includes(textoNormalizado));
+                const coincideTexto = palabrasClave.every(palabra => contenidoNode.includes(palabra));
+
+                if (!coincidePlaca && !coincideTexto) return false;
+            }
+
+            return true;
+        });
+
+        // Agregamos los que pasaron el filtro estricto
+        nodosObjetivo.forEach(n => idsVisibles.add(n.id));
+
+        // 4. RECUPERAR CONTEXTO (SOLO DENTRO DEL MUNICIPIO FILTRADO)
+        // Si encontré un carro rojo en Nogales, muéstrame su incidente DE NOGALES.
+        if (idsVisibles.size > 0) {
+            allEdgesData.forEach(edge => {
+                const muniOrigen = mapaJurisdiccion[edge.from] || "HERMOSILLO";
+                const muniDestino = mapaJurisdiccion[edge.to] || "HERMOSILLO";
+                
+                // Solo expandimos conexiones si coinciden con el filtro de municipio (o es TODOS)
+                const zonaValida = (municipioSel === "TODOS" || (muniOrigen === municipioSel && muniDestino === municipioSel));
+
+                if (zonaValida) {
+                    if (idsVisibles.has(edge.to)) idsVisibles.add(edge.from);
+                    if (idsVisibles.has(edge.from)) idsVisibles.add(edge.to);
+                }
+            });
+        }
+
+        // 5. APLICAR
+        const actualizaciones = allNodesData.map(n => ({
+            id: n.id,
+            hidden: !idsVisibles.has(n.id)
+        }));
+
+        networkNodes.update(actualizaciones);
+        if (idsVisibles.size > 0 && idsVisibles.size < 50) network.fit();
     }
 
-    async function cargarUsuarios() { try { const res = await fetchSecure(`${API_URL}/users/`); if(res.ok) { const users = await res.json(); const tb = document.getElementById('tablaUsuarios'); tb.innerHTML = ""; users.forEach(u => { tb.innerHTML += `<tr><td><small>${u.id_usuario}</small></td><td><b>${u.username}</b><br><small class="text-muted">${u.nombre_completo}</small></td><td><span class="badge bg-${u.rol==='admin'?'danger':'primary'}">${u.rol}</span></td><td class="text-end"><button class="btn btn-sm btn-outline-danger" onclick="borrarUsuario(${u.id_usuario})"><i class="bi bi-trash"></i></button></td></tr>`; }); } } catch(e) { console.error(e); } }
-    document.getElementById('formUsuario').addEventListener('submit', async (e) => { e.preventDefault(); const fd = new FormData(); fd.append('username', document.getElementById('new_user').value); fd.append('password', document.getElementById('new_pass').value); fd.append('nombre', document.getElementById('new_name').value); fd.append('rol', document.getElementById('new_role').value); await fetchSecure(`${API_URL}/users/`, {method: "POST", body: fd}); alert("Creado"); cargarUsuarios(); document.getElementById('formUsuario').reset(); });
-    async function borrarUsuario(id) { if(confirm("¿Eliminar?")) { await fetchSecure(`${API_URL}/users/${id}`, {method: "DELETE"}); cargarUsuarios(); } }
+    // =======================================================
+   // =======================================================
+    // FUNCIÓN DE EVIDENCIA V39 (FUERZA BRUTA CON HTML2CANVAS)
+    // =======================================================
+    function capturarRed() {
+        const elemento = document.getElementById('vista-neural'); // Capturamos TODA la vista, no solo el canvas
+        
+        // Notificación visual de "Capturando..."
+        const btn = document.querySelector('button[title="Descargar Evidencia"]');
+        const originalIcon = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+        
+        html2canvas(elemento, {
+            useCORS: true,       // CRÍTICO: Permite imágenes de otros dominios
+            allowTaint: true,    // CRÍTICO: Permite "contaminar" el lienzo
+            backgroundColor: '#0f172a', // Asegura fondo oscuro
+            scale: 2,            // Mejor calidad (HD)
+            logging: false       // Sin basura en consola
+        }).then(canvas => {
+            // Generar descarga
+            const link = document.createElement('a');
+            const fecha = new Date().toISOString().slice(0,19).replace(/:/g, "-");
+            link.download = `EVIDENCIA_CORTEX_${fecha}.png`;
+            link.href = canvas.toDataURL("image/png");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Restaurar botón
+            btn.innerHTML = originalIcon;
+        }).catch(err => {
+            console.error("Error táctico en captura:", err);
+            alert("Error al generar evidencia. Verifique que el Backend permita CORS.");
+            btn.innerHTML = originalIcon;
+        });
+    }
 
 </script>
 </body>
