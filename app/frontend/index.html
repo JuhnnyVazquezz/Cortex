@@ -16,6 +16,12 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/vis/4.21.0/vis.min.css" rel="stylesheet" type="text/css" />
     
+    <link rel="stylesheet" href="https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.css" />
+    <script src="https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -156,7 +162,9 @@
         <a class="nav-link" id="nav-bitacora" onclick="cambiarVista('bitacora')"><i class="bi bi-table me-3 fs-5"></i> BITÁCORA</a>
         <a class="nav-link" id="nav-analitica" onclick="cambiarVista('analitica')"><i class="bi bi-pie-chart-fill me-3 fs-5"></i> INTELIGENCIA</a>
         <a class="nav-link" id="nav-neural" onclick="cambiarVista('neural')"><i class="bi bi-diagram-3-fill me-3 fs-5"></i> RED NEURAL</a>
-        <a class="nav-link" id="nav-admin" onclick="cambiarVista('admin')"><i class="bi bi-shield-shaded me-3 fs-5"></i> GESTIÓN AGENTES</a>
+        <a class="nav-link" id="nav-trayectoria" onclick="cambiarVista('trayectoria')">
+                <i class="bi bi-bezier2 me-3 fs-5"></i> Tracker
+        </a>        <a class="nav-link" id="nav-admin" onclick="cambiarVista('admin')"><i class="bi bi-shield-shaded me-3 fs-5"></i> GESTIÓN AGENTES</a>
     </nav>
     
     <div class="p-3">
@@ -364,6 +372,104 @@
         </div>
     </div>
 
+    <div id="vista-trayectoria" class="view-section d-none">
+    
+    <div class="card bg-black border-secondary mb-3 shadow">
+        <div class="card-body p-3 border-top border-4 border-info rounded">
+            <h6 class="text-secondary fw-bold mb-3 border-bottom border-secondary pb-1">
+                <i class="bi bi-crosshair"></i> DATOS DE LA OPERACIÓN
+            </h6>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="small text-info fw-bold ms-1">VEHÍCULO / OBJETIVO</label>
+                    <input type="text" id="trackVehiculo" class="form-control bg-dark text-white border-secondary fw-bold" placeholder="Ej: FORD LOBO NEGRA">
+                </div>
+                <div class="col-md-2">
+                    <label class="small text-info fw-bold ms-1">IDENTIFICADOR</label>
+                    <input type="text" id="trackPlaca" class="form-control bg-dark text-white fw-bold text-uppercase" placeholder="ABC-123">
+                </div>
+                <div class="col-md-2">
+                    <label class="small text-info fw-bold ms-1">FOLIO CASO</label>
+                    <input type="text" id="trackCaso" class="form-control bg-dark text-white fw-bold" placeholder="C5i-2026-X">
+                </div>
+                <div class="col-md-3">
+                    <label class="small text-info fw-bold ms-1">FECHA DEL TRACKEO</label>
+                    <input type="date" id="trackFecha" class="form-control bg-dark text-white fw-bold">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-danger w-100 fw-bold shadow-sm" onclick="generarFichaPDF()">
+                        <i class="bi bi-file-earmark-pdf-fill me-2"></i> GENERAR PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row h-100">
+        <div class="col-md-9">
+            <div class="card bg-dark border-secondary h-100 shadow">
+                <div class="card-header py-1 d-flex justify-content-between align-items-center bg-black border-secondary">
+                    <span class="text-white fw-bold small"><i class="bi bi-map-fill text-primary"></i> LIENZO OPERATIVO</span>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-xs btn-outline-info py-0" onclick="dibujarTexto()" title="Agregar Nota de Texto en Mapa"><i class="bi bi-fonts"></i> Texto</button>
+                        <button class="btn btn-xs btn-outline-warning py-0" onclick="limpiarTracker()"><i class="bi bi-trash"></i> Limpiar</button>
+                    </div>
+                </div>
+                <div class="card-body p-0 position-relative bg-dark">
+                    <div id="mapaTracker" style="height: 60vh; width: 100%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card bg-dark border-secondary h-100 shadow">
+                <div class="card-header py-1 bg-black text-white small fw-bold border-secondary">
+                    <i class="bi bi-clock-history text-success"></i> CRONOLOGÍA DE EVENTOS
+                </div>
+                <div class="card-body p-2 bg-black bg-opacity-50" id="trackLog" style="height: 60vh; overflow-y: auto;">
+                    <div class="text-center text-muted mt-5 opacity-50">
+                        <i class="bi bi-pencil-fill fs-1"></i><br>
+                        <small>El historial aparecerá aquí.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalTracker" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content bg-black text-white border-secondary shadow-lg">
+            <div class="modal-header border-secondary py-2 bg-secondary bg-opacity-25">
+                <h6 class="modal-title fw-bold text-white"><i class="bi bi-pin-map-fill"></i> DETALLE DE PUNTO</h6>
+            </div>
+            <div class="modal-body p-3">
+                <label class="small text-muted fw-bold">TIPO DE EVENTO</label>
+                <select id="tkTipo" class="form-select form-select-sm bg-dark text-white mb-3 border-secondary fw-bold">
+                    <option value="AVISTAMIENTO">👁️ AVISTAMIENTO</option>
+                    <option value="CAMBIO_RUTA">🔄 CAMBIO DE RUTA</option>
+                    <option value="EVIDENCIA">📷 EVIDENCIA / HALLAZGO</option>
+                    <option value="ABANDONO">🛑 VEHÍCULO ABANDONADO</option>
+                    <option value="PERIMETRO">⭕ CIERRE DE PERÍMETRO</option>
+                </select>
+
+                <label class="small text-muted fw-bold">HORA DEL SUCESO</label>
+                <input type="time" id="tkHora" class="form-control form-control-sm bg-dark text-white mb-3 border-secondary fw-bold">
+                
+                <label class="small text-muted fw-bold">NOTAS TÁCTICAS</label>
+                <textarea id="tkNota" class="form-control form-control-sm bg-dark text-white border-secondary mb-3" rows="3" placeholder="Detalles visuales, dirección..."></textarea>
+                
+                <label class="small text-muted fw-bold">EVIDENCIA VISUAL</label>
+                <input type="file" id="tkFoto" class="form-control form-control-sm bg-dark text-white border-secondary" accept="image/*">
+            </div>
+            <div class="modal-footer border-secondary py-2 bg-secondary bg-opacity-10">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-sm btn-primary fw-bold px-4" onclick="guardarPuntoTracker()">GUARDAR</button>
+            </div>
+        </div>
+    </div>
+</div>
+
     <div id="vista-admin" class="view-section d-none">
         <div class="row g-4">
             <div class="col-md-4">
@@ -429,6 +535,13 @@
     const SONORA_LAT = 29.072967, SONORA_LON = -110.955919;
     let debounceTimer; 
 
+    // --- VARIABLES GLOBALES DEL TRACKER ---
+    let mapTracker;
+    let currentTrackLayer = null;
+    let trackEventos = [];
+    const modalTk = new bootstrap.Modal(document.getElementById('modalTracker'));
+
+
     // =======================================================
     // INICIALIZACIÓN
     // =======================================================
@@ -475,6 +588,9 @@
         if(v === 'analitica') setTimeout(cargarDashboard, 200);
         if(v === 'captura') setTimeout(()=> mapaCaptura.invalidateSize(), 200);
         if(v === 'admin') cargarUsuarios();
+        if (v === 'trayectoria') {
+        setTimeout(initTracker, 200); // Inicia el mapa solo cuando se abre
+    }
     }
 
     // =======================================================
@@ -817,6 +933,251 @@
             }
         });
     }
+
+    // 2. FUNCIÓN DE INICIO (ESTA ES LA NUEVA LÓGICA)
+// INICIAR TRACKER
+function initTracker() {
+    // Poner fecha de hoy por defecto si está vacía
+    if(!document.getElementById('trackFecha').value) {
+        document.getElementById('trackFecha').valueAsDate = new Date();
+    }
+
+    if (mapTracker) {
+        mapTracker.invalidateSize();
+        return;
+    }
+
+    // 1. CONFIGURACIÓN DEL MAPA (CLAVE: preferCanvas: true para que salgan las líneas en el PDF)
+    mapTracker = L.map('mapaTracker', {
+        zoomControl: false,
+        preferCanvas: true // <--- ¡ESTO ES VITAL PARA EL PDF!
+    }).setView([29.072967, -110.955919], 13);
+    
+    L.control.zoom({ position: 'bottomright' }).addTo(mapTracker);
+
+    // Google Híbrido
+    L.tileLayer('http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',{
+        maxZoom: 20, subdomains:['mt0','mt1','mt2','mt3']
+    }).addTo(mapTracker);
+
+    // Herramientas de Dibujo
+    mapTracker.pm.setLang('es');
+    mapTracker.pm.addControls({
+        position: 'topleft',
+        drawCircleMarker: false, 
+        drawRectangle: true, // Útil para zonas
+        drawPolygon: true,   // Útil para perímetros irregulares
+        drawCircle: true,
+        drawText: true,      // Permitir texto en mapa
+        cutPolygon: false,
+        rotateMode: false
+    });
+
+    // Eventos de Dibujo
+    mapTracker.on('pm:create', (e) => {
+        currentTrackLayer = e.layer;
+        const shape = e.shape;
+
+        // A) LÍNEA -> Flechas Automáticas
+        if (shape === 'Line') {
+            L.polylineDecorator(e.layer, {
+                patterns: [
+                    { offset: '100%', repeat: 0, symbol: L.Symbol.arrowHead({pixelSize: 15, polygon: false, pathOptions: {stroke: true, color: '#0dcaf0'}}) },
+                    { offset: '25px', repeat: '80px', symbol: L.Symbol.arrowHead({pixelSize: 12, pathOptions: {fillOpacity: 1, weight: 0, color: '#0dcaf0'}}) }
+                ]
+            }).addTo(mapTracker);
+            agregarLogTracker("DESPLAZAMIENTO", "--:--", "Ruta de trayectoria trazada", null);
+        }
+        // B) ZONAS (Círculos/Polígonos)
+        else if (shape === 'Circle' || shape === 'Polygon' || shape === 'Rectangle') {
+            agregarLogTracker("PERÍMETRO", "--:--", "Zona delimitada en mapa", null);
+            currentTrackLayer.bindPopup("ZONA DELIMITADA").openPopup();
+        }
+        // C) TEXTO
+        else if (shape === 'Text') {
+             // El usuario escribe directo en el mapa, no hacemos nada extra
+        }
+        // D) MARCADOR -> Modal de Detalles
+        else if (shape === 'Marker') {
+            document.getElementById('tkHora').value = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            document.getElementById('tkNota').value = "";
+            document.getElementById('tkFoto').value = "";
+            modalTk.show();
+        }
+    });
+}
+
+// GUARDAR PUNTO
+function guardarPuntoTracker() {
+    const tipo = document.getElementById('tkTipo').value;
+    const hora = document.getElementById('tkHora').value;
+    const nota = document.getElementById('tkNota').value;
+    const file = document.getElementById('tkFoto').files[0];
+
+    if(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => procesarPunto(tipo, hora, nota, e.target.result);
+        reader.readAsDataURL(file);
+    } else {
+        procesarPunto(tipo, hora, nota, null);
+    }
+}
+
+function procesarPunto(tipo, hora, nota, img) {
+    // Popup visual en el mapa
+    let content = `<div style="text-align:center; color:#333;"><b>${tipo}</b><br>${hora}`;
+    if(img) content += `<br><img src="${img}" style="width:100px; border-radius:4px; margin-top:5px;">`;
+    content += "</div>";
+    currentTrackLayer.bindPopup(content).openPopup();
+    
+    // Agregar a la lista lateral
+    agregarLogTracker(tipo, hora, nota, img);
+    modalTk.hide();
+}
+
+function agregarLogTracker(tipo, hora, nota, img) {
+    trackEventos.push({tipo, hora, nota, img});
+    
+    const div = document.getElementById('trackLog');
+    if(trackEventos.length === 1) div.innerHTML = ""; 
+
+    let color = "secondary";
+    if(tipo === 'AVISTAMIENTO') color = "info";
+    if(tipo === 'EVIDENCIA') color = "danger";
+    if(tipo === 'CAMBIO_RUTA') color = "warning";
+
+    // Tarjeta visual (Card)
+    div.innerHTML += `
+        <div class="card mb-2 bg-dark border border-${color} text-white shadow-sm" style="font-size:0.85rem;">
+            <div class="card-body p-2">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="badge bg-${color} text-black fw-bold">${tipo}</span>
+                    <small class="font-monospace text-muted">${hora}</small>
+                </div>
+                <p class="mb-1 small">${nota || 'Sin observaciones.'}</p>
+                ${img ? `<div class="mt-2 text-center bg-black rounded p-1"><img src="${img}" style="max-height:80px; max-width:100%;" class="rounded cursor-pointer" onclick="window.open(this.src)"></div>` : ''}
+            </div>
+        </div>
+    `;
+    div.scrollTop = div.scrollHeight;
+}
+
+function limpiarTracker() {
+    if(!confirm("¿CONFIRMA LIMPIEZA DE OPERACIÓN?")) return;
+    mapTracker.eachLayer(l => {
+        if(l.pm && !l._url) mapTracker.removeLayer(l);
+        if(l._patterns) mapTracker.removeLayer(l); // Borrar flechas
+    });
+    document.getElementById('trackLog').innerHTML = "";
+    trackEventos = [];
+}
+
+function dibujarTexto() {
+    // Activa la herramienta de texto de Geoman
+    mapTracker.pm.enableDraw('Text');
+    alert("Haga clic en el mapa para escribir texto.");
+}
+
+// 4. GENERADOR DE PDF PROFESIONAL (AutoTable)
+async function generarFichaPDF() {
+    if(trackEventos.length === 0 && !confirm("No hay eventos registrados. ¿Generar PDF solo con el mapa?")) return;
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+
+    // 1. DATOS DE ENCABEZADO
+    const vehiculo = document.getElementById('trackVehiculo').value || "NO IDENTIFICADO";
+    const placa = document.getElementById('trackPlaca').value || "S/D";
+    const caso = document.getElementById('trackCaso').value || "SIN FOLIO";
+    const fecha = document.getElementById('trackFecha').value || new Date().toLocaleDateString();
+
+    // 2. CAPTURA DEL MAPA (Truco: Forzar renderizado)
+    const mapaDiv = document.getElementById('mapaTracker');
+    // Ocultamos controles
+    const controles = mapaDiv.querySelector('.leaflet-control-container');
+    if(controles) controles.style.display = 'none';
+    
+    const canvas = await html2canvas(mapaDiv, {
+        useCORS: true, 
+        allowTaint: true,
+        scale: 2 // Alta calidad
+    });
+    const imgMap = canvas.toDataURL('image/png');
+    
+    if(controles) controles.style.display = 'block';
+
+    // 3. CONSTRUCCIÓN DEL PDF
+    // Header
+    doc.setFillColor(20, 20, 20); // Negro casi puro
+    doc.rect(0, 0, 210, 30, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("REPORTE DE TRAYECTORIA TÁCTICA", 10, 12);
+    
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.text(`CÓRTEX INTELLIGENCE | FECHA REPORTE: ${new Date().toLocaleString()}`, 10, 22);
+
+    // Tabla de Info General
+    doc.autoTable({
+        startY: 32,
+        head: [['VEHÍCULO / OBJETIVO', 'IDENTIFICADOR / PLACA', 'FOLIO / CASO', 'FECHA OPERACIÓN']],
+        body: [[vehiculo, placa, caso, fecha]],
+        theme: 'grid',
+        headStyles: { fillColor: [41, 128, 185], textColor: 255, fontStyle: 'bold' },
+        styles: { fontSize: 9, cellPadding: 3 }
+    });
+
+    // Imagen del Mapa
+    const finalY = doc.lastAutoTable.finalY + 5;
+    doc.setFontSize(11);
+    doc.setTextColor(0);
+    doc.text("MAPA DE OPERACIONES", 10, finalY);
+    doc.addImage(imgMap, 'PNG', 10, finalY + 2, 190, 100);
+    doc.setDrawColor(0);
+    doc.rect(10, finalY + 2, 190, 100); // Marco
+
+    // Tabla de Eventos (Cronología)
+    const mapBottom = finalY + 105;
+    doc.text("CRONOLOGÍA DE EVENTOS", 10, mapBottom);
+
+    // Preparamos datos para la tabla (incluyendo imágenes)
+    const tableBody = trackEventos.map(e => {
+        return [e.hora, e.tipo, e.nota || '', e.img ? 'SI' : 'NO'];
+    });
+
+    doc.autoTable({
+        startY: mapBottom + 2,
+        head: [['HORA', 'TIPO EVENTO', 'NOTAS / OBSERVACIONES', 'EVIDENCIA']],
+        body: tableBody,
+        theme: 'striped',
+        headStyles: { fillColor: [52, 73, 94] },
+        styles: { valign: 'middle' },
+        columnStyles: {
+            0: { cellWidth: 20 }, // Hora
+            1: { cellWidth: 40, fontStyle: 'bold' }, // Tipo
+            3: { cellWidth: 20, halign: 'center' } // Tiene foto?
+        },
+        // Hook para dibujar las imágenes dentro de la celda
+        didDrawCell: function(data) {
+            if (data.column.index === 3 && data.cell.section === 'body') {
+                const rowIndex = data.row.index;
+                const evento = trackEventos[rowIndex];
+                if (evento.img) {
+                    // Dibujamos la imagen pequeña en la celda
+                    try {
+                        doc.addImage(evento.img, 'JPEG', data.cell.x + 2, data.cell.y + 2, 15, 10);
+                    } catch(err) {}
+                }
+            }
+        },
+        rowPageBreak: 'auto',
+        bodyStyles: { minCellHeight: 15 } // Altura mínima para que quepa la foto
+    });
+
+    doc.save(`TRAYECTORIA_${placa}_${fecha}.pdf`);
+}
     // =======================================================
     // HELPERS, ADMIN Y EXPORTS
     // =======================================================

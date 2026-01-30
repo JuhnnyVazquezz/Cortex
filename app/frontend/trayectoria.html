@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CÓRTEX | Ruteo Táctico</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        body { background-color: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .sidebar { height: 100vh; background: #1e293b; border-right: 1px solid #334155; position: fixed; width: 250px; }
+        .main-content { margin-left: 250px; padding: 20px; }
+        #mapaTactico { height: 70vh; width: 100%; border-radius: 8px; border: 2px solid #475569; z-index: 1; }
+        
+        /* ESTILO NUEVO PARA EL ENCABEZADO TÁCTICO */
+        .vehiculo-header { 
+            background: #1e293b; 
+            padding: 20px; 
+            border-radius: 8px; 
+            border-top: 4px solid #0d6efd; 
+            margin-bottom: 20px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .input-group-text {
+            background-color: #334155;
+            color: #0ea5e9;
+            border-color: #475569;
+            font-weight: bold;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+        .form-control::placeholder { color: #64748b; font-style: italic; }
+
+        .timeline-card { background: #1e293b; border: 1px solid #334155; margin-bottom: 10px; font-size: 0.9rem; position: relative; }
+        .img-preview { width: 100%; height: 100px; object-fit: cover; border-radius: 4px; margin-top: 5px; cursor: pointer; }
+        
+        /* Ajuste para que los controles del mapa sean oscuros */
+        .leaflet-bar a { background-color: #1e293b; color: white; border-bottom: 1px solid #475569; }
+        .leaflet-bar a:hover { background-color: #334155; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar p-3">
+        <h4 class="text-info fw-bold mb-4"><i class="bi bi-cpu-fill"></i> CÓRTEX V32</h4>
+        <ul class="nav flex-column gap-2">
+            <li class="nav-item"><a href="index.html" class="nav-link text-secondary"><i class="bi bi-grid"></i> Dashboard</a></li>
+            <li class="nav-item"><a href="#" class="nav-link active text-white bg-primary rounded"><i class="bi bi-bezier2"></i> Ruteo Táctico</a></li>
+        </ul>
+        <div class="mt-auto pt-5 text-center text-muted small">
+            Módulo de Inteligencia<br>V.2.0
+        </div>
+    </div>
+
+    <div class="main-content">
+        
+        <div class="vehiculo-header">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-car-front-fill me-2"></i> VEHÍCULO</span>
+                        <input type="text" id="txtVehiculo" class="form-control bg-dark text-white border-secondary fw-bold" placeholder="Ej: NISSAN VERSA GRIS">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-123 me-2"></i> PLACA</span>
+                        <input type="text" id="txtPlaca" class="form-control bg-dark text-white border-secondary fw-bold text-uppercase" placeholder="WDD-123">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-folder-fill me-2"></i> CASO</span>
+                        <input type="text" id="txtCaso" class="form-control bg-dark text-white border-secondary fw-bold" placeholder="FOLIO C5i">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-danger w-100 fw-bold shadow" onclick="generarFichaPDF()">
+                        <i class="bi bi-file-earmark-pdf-fill"></i> EXPORTAR
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-9">
+                <div class="card bg-dark border-secondary shadow-lg">
+                    <div class="card-header d-flex justify-content-between py-2 align-items-center">
+                        <span class="text-info fw-bold small"><i class="bi bi-crosshair"></i> ZONA DE OPERACIONES</span>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-secondary text-white" onclick="cambiarMapa('calle')">Mapa Calles</button>
+                            <button class="btn btn-outline-secondary text-white" onclick="cambiarMapa('satelite')">Satélite</button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0 position-relative">
+                        <div id="mapaTactico"></div>
+                        <div style="position: absolute; bottom: 20px; left: 20px; z-index: 1000; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; color: white; font-size: 0.8rem;">
+                            <i class="bi bi-geo-alt-fill text-primary"></i> Pin: Evento<br>
+                            <i class="bi bi-arrow-up-right text-success"></i> Línea: Ruta
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="text-secondary fw-bold m-0">HISTORIAL DE RUTA</h6>
+                    <button class="btn btn-sm btn-outline-warning" onclick="limpiarMapa()"><i class="bi bi-trash"></i> Limpiar</button>
+                </div>
+                
+                <div id="listaEventos" style="height: 70vh; overflow-y: auto; padding-right: 5px;">
+                    <div class="text-center text-muted mt-5 opacity-50">
+                        <i class="bi bi-pencil-square fs-1"></i><br>
+                        <small>Usa las herramientas del mapa para trazar la ruta.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal fade" id="modalPunto" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-white border-secondary shadow-lg">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title fw-bold text-primary"><i class="bi bi-pin-map-fill"></i> Registrar Evento</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <label class="small text-muted fw-bold">TIPO DE EVENTO</label>
+                    <select id="tipoEvento" class="form-select bg-dark text-white mb-3 border-secondary">
+                        <option value="AVISTAMIENTO">👁️ Avistamiento Visual</option>
+                        <option value="CAMBIO_RUTA">🔄 Cambio de Ruta</option>
+                        <option value="ABANDONO">🛑 Vehículo Abandonado</option>
+                        <option value="EVIDENCIA">📷 Evidencia Encontrada</option>
+                        <option value="DETENCION">👮 Detención / Aseguramiento</option>
+                    </select>
+                    
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="small text-muted fw-bold">HORA</label>
+                            <input type="time" id="horaEvento" class="form-control bg-dark text-white mb-3 border-secondary">
+                        </div>
+                        <div class="col-6">
+                             <label class="small text-muted fw-bold">FOTO (Opcional)</label>
+                             <input type="file" id="fotoEvento" class="form-control bg-dark text-white mb-3 border-secondary form-control-sm" accept="image/*">
+                        </div>
+                    </div>
+
+                    <label class="small text-muted fw-bold">NOTAS DE INTELIGENCIA</label>
+                    <textarea id="notaEvento" class="form-control bg-dark text-white border-secondary" rows="2" placeholder="Describa detalles relevantes..."></textarea>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary fw-bold" onclick="guardarDetallePunto()">Guardar Punto</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/@geoman-io/leaflet-geoman-free@latest/dist/leaflet-geoman.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-polylinedecorator@1.6.0/dist/leaflet.polylineDecorator.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <script>
+        // VARIABLES GLOBALES
+        let map;
+        let layerCalle, layerSatelite;
+        let currentShape = null;
+        let eventosLog = []; 
+        const modal = new bootstrap.Modal(document.getElementById('modalPunto'));
+
+        function initMap() {
+            // Coordenadas Hermosillo Centro
+            map = L.map('mapaTactico', {
+                zoomControl: false // Movemos el zoom para que se vea mejor
+            }).setView([29.072967, -110.955919], 13);
+            
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+            layerCalle = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 });
+            layerSatelite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
+            
+            layerCalle.addTo(map); 
+
+            // 1. CONFIGURACIÓN EN ESPAÑOL (Geoman)
+            map.pm.setLang('es'); // ¡Esto pone los tooltips en español!
+
+            map.pm.addControls({
+                position: 'topleft',
+                drawCircleMarker: false,
+                rotateMode: false,
+                drawRectangle: false,
+                drawText: false,
+                drawCircle: true,
+                drawMarker: true,
+                drawPolyline: true,
+                drawPolygon: true,
+                editMode: true,
+                dragMode: true,
+                cutPolygon: false,
+                removalMode: true
+            });
+
+            // 2. DETECTOR DE DIBUJO
+            map.on('pm:create', (e) => {
+                currentShape = e.layer;
+                
+                // A) Si es LÍNEA (Ruta) -> Poner FLECHAS
+                if (e.shape === 'Line') {
+                    // Agregamos flechas sobre la línea automáticamente
+                    const decorator = L.polylineDecorator(e.layer, {
+                        patterns: [
+                            // Flecha al final de cada segmento o repetida
+                            { offset: '100%', repeat: 0, symbol: L.Symbol.arrowHead({pixelSize: 15, polygon: false, pathOptions: {stroke: true, color: '#3388ff'}}) },
+                            { offset: '25px', repeat: '100px', symbol: L.Symbol.arrowHead({pixelSize: 12, pathOptions: {fillOpacity: 1, weight: 0, color: '#3388ff'}}) }
+                        ]
+                    }).addTo(map);
+                    
+                    // Vinculamos el decorador a la línea para borrarlo si borran la línea
+                    e.layer.decorator = decorator; 
+                    
+                    // Añadimos al historial automáticamente como "Desplazamiento"
+                    agregarEventoTimeline("RUTA", "--:--", "Desplazamiento trazado", null);
+                }
+
+                // B) Si es MARCADOR (Pin) -> Pedir info
+                if (e.shape === 'Marker') {
+                    document.getElementById('horaEvento').value = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    document.getElementById('fotoEvento').value = "";
+                    document.getElementById('notaEvento').value = "";
+                    modal.show();
+                }
+            });
+            
+            // Borrar flechas si se borra la línea
+            map.on('pm:remove', (e) => {
+                if(e.layer.decorator) {
+                    map.removeLayer(e.layer.decorator);
+                }
+            });
+        }
+
+        function cambiarMapa(tipo) {
+            if(tipo === 'calle') { map.removeLayer(layerSatelite); map.addLayer(layerCalle); }
+            else { map.removeLayer(layerCalle); map.addLayer(layerSatelite); }
+        }
+
+        function guardarDetallePunto() {
+            const tipo = document.getElementById('tipoEvento').value;
+            const hora = document.getElementById('horaEvento').value;
+            const nota = document.getElementById('notaEvento').value;
+            const fileInput = document.getElementById('fotoEvento');
+            
+            if (fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imgData = e.target.result; 
+                    finalizarPunto(tipo, hora, nota, imgData);
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                finalizarPunto(tipo, hora, nota, null);
+            }
+        }
+
+        function finalizarPunto(tipo, hora, nota, imgData) {
+            agregarEventoTimeline(tipo, hora, nota, imgData);
+            
+            // Icono personalizado según tipo
+            let color = "blue";
+            if(tipo === 'EVIDENCIA') color = "red";
+            if(tipo === 'ABANDONO') color = "orange";
+
+            // Popup en el mapa
+            let content = `<div style="text-align:center;"><b style="color:${color}">${tipo}</b><br>${hora}<br>${nota}`;
+            if(imgData) content += `<br><img src="${imgData}" style="width:120px; border-radius:4px; margin-top:5px; border:2px solid white;">`;
+            content += "</div>";
+            
+            currentShape.bindPopup(content).openPopup();
+            modal.hide();
+        }
+
+        function agregarEventoTimeline(tipo, hora, nota, img) {
+            const container = document.getElementById('listaEventos');
+            if(eventosLog.length === 0) container.innerHTML = "";
+
+            eventosLog.push({ tipo, hora, nota, img });
+
+            // Iconos para la lista
+            let icon = "bi-geo-alt";
+            if(tipo === 'RUTA') icon = "bi-arrow-right";
+            if(tipo === 'EVIDENCIA') icon = "bi-camera";
+
+            const html = `
+                <div class="timeline-card p-2 rounded text-white border-start border-3 border-info position-relative">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <strong class="text-info"><i class="bi ${icon}"></i> ${tipo}</strong>
+                        <span class="badge bg-secondary">${hora}</span>
+                    </div>
+                    <p class="mb-1 text-muted fst-italic" style="font-size:11px;">${nota || 'Sin notas.'}</p>
+                    ${img ? `<img src="${img}" class="img-preview shadow-sm" onclick="verFotoGrande(this.src)">` : ''}
+                </div>
+            `;
+            container.innerHTML += html;
+            // Auto scroll al final
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function verFotoGrande(src) {
+            // Simple visualizador rápido en nueva pestaña para no complicar
+            const w = window.open("");
+            w.document.write(`<img src="${src}" style="max-width:100%">`);
+        }
+
+        function limpiarMapa() {
+            if(confirm("¿Borrar todo el trazado actual?")) {
+                map.eachLayer((layer) => {
+                    if (!!layer.pm && !layer._url) { // Borra capas dibujadas, no el mapa base
+                        map.removeLayer(layer);
+                    }
+                    if(layer.decorator) map.removeLayer(layer.decorator); // Borra flechas
+                });
+                document.getElementById('listaEventos').innerHTML = '<div class="text-center text-muted mt-5 opacity-50"><i class="bi bi-pencil-square fs-1"></i><br>Lienzo Limpio</div>';
+                eventosLog = [];
+            }
+        }
+
+        // GENERAR PDF (IGUAL QUE ANTES, PERO CON MEJOR FORMATO)
+        async function generarFichaPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            
+            const vehiculo = document.getElementById('txtVehiculo').value || "NO IDENTIFICADO";
+            const placa = document.getElementById('txtPlaca').value || "S/D";
+            const caso = document.getElementById('txtCaso').value || "SIN FOLIO";
+
+            // Captura de Mapa
+            const controls = document.querySelector('.leaflet-control-container');
+            controls.style.display = 'none'; // Ocultar controles para la foto
+            
+            const canvasMap = await html2canvas(document.getElementById('mapaTactico'), {
+                useCORS: true, allowTaint: true, scale: 2
+            });
+            const imgMap = canvasMap.toDataURL('image/png');
+            controls.style.display = 'block';
+
+            // ENCABEZADO C5i STYLE
+            doc.setFillColor(15, 23, 42); // Azul Oscuro
+            doc.rect(0, 0, 210, 35, 'F');
+            
+            doc.setTextColor(255, 255, 255);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(18);
+            doc.text("ANÁLISIS DE TRAYECTORIA Y RUTEO", 10, 15);
+            
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "normal");
+            doc.text(`GENERADO POR: CÓRTEX INTELLIGENCE SYSTEM | FECHA: ${new Date().toLocaleDateString()}`, 10, 25);
+
+            // INFO DEL OBJETIVO
+            doc.setFillColor(230, 230, 230);
+            doc.rect(10, 40, 190, 20, 'F');
+            doc.setTextColor(0,0,0);
+            doc.setFont("helvetica", "bold");
+            doc.text("OBJETIVO:", 15, 52);
+            doc.setFont("helvetica", "normal");
+            doc.text(vehiculo, 40, 52);
+            
+            doc.setFont("helvetica", "bold");
+            doc.text("PLACA:", 100, 52);
+            doc.setFont("helvetica", "normal");
+            doc.text(placa, 120, 52);
+
+            doc.setFont("helvetica", "bold");
+            doc.text("CASO:", 150, 52);
+            doc.text(caso, 165, 52);
+
+            // MAPA
+            doc.addImage(imgMap, 'PNG', 10, 65, 190, 100);
+            
+            // MARCO ALREDEDOR DEL MAPA
+            doc.setDrawColor(0,0,0);
+            doc.setLineWidth(0.5);
+            doc.rect(10, 65, 190, 100);
+
+            // CRONOLOGÍA
+            doc.setFillColor(13, 110, 253); // Azul Primario
+            doc.rect(10, 170, 190, 8, 'F');
+            doc.setTextColor(255,255,255);
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text("SECUENCIA DE HECHOS REGISTRADOS", 15, 175);
+
+            let yPos = 185;
+            doc.setTextColor(0,0,0);
+
+            eventosLog.forEach((ev) => {
+                if (yPos > 270) { doc.addPage(); yPos = 20; }
+                
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "bold");
+                doc.text(`[${ev.hora}] ${ev.tipo}`, 15, yPos);
+                
+                doc.setFont("helvetica", "normal");
+                doc.setFontSize(9);
+                doc.text(ev.nota || "---", 15, yPos + 5);
+
+                if(ev.img) {
+                    doc.addImage(ev.img, 'JPEG', 150, yPos - 5, 30, 20);
+                }
+                
+                doc.setDrawColor(200);
+                doc.line(15, yPos + 18, 195, yPos + 18);
+                yPos += 25;
+            });
+
+            doc.save(`RUTEO_${placa}_${new Date().getTime()}.pdf`);
+        }
+
+        window.onload = initMap;
+    </script>
+</body>
+</html>
